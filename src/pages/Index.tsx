@@ -2,12 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Calendar, Users, Megaphone, Trees, Scissors, Home, CheckCircle } from "lucide-react";
+import { Sparkles, Calendar, Users, Megaphone, Trees, Scissors, Home, CheckCircle, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-landscape.jpg";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     company: "",
@@ -23,6 +25,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation Bar */}
+      <nav className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-primary/20 to-transparent backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-primary-foreground">LandPro AI</h1>
+          <Button 
+            onClick={() => navigate("/dashboard")}
+            variant="outline"
+            className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 backdrop-blur-sm gap-2"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            View Dashboard
+          </Button>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div 
