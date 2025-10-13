@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Sparkles, Loader2, Download, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
 
 const quotes = [
   {
@@ -88,9 +89,6 @@ export default function Quotes() {
   const [propertyUnit, setPropertyUnit] = useState("acres");
   const [materialNotes, setMaterialNotes] = useState("");
 
-  // Future Integration:
-  // Replace this simulation with actual API call to OpenAI or custom backend
-  // Example: fetch('/api/generateQuote', { method: 'POST', body: JSON.stringify(formData) })
   const handleGenerateQuote = async () => {
     if (!clientName || !jobDescription || !propertySize) {
       toast.error("Please fill in all required fields");
@@ -100,49 +98,45 @@ export default function Quotes() {
     setIsGenerating(true);
     setGeneratedQuote(null);
 
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    try {
+      // Call the Lovable Cloud backend endpoint
+      const { data, error } = await supabase.functions.invoke('generate-quote', {
+        body: {
+          clientName,
+          jobDescription,
+          propertySize: parseFloat(propertySize),
+          propertyUnit,
+          materialNotes
+        }
+      });
 
-    // Parse property size
-    const size = parseFloat(propertySize);
-    const isAcres = propertyUnit === "acres";
-    const sizeInSqFt = isAcres ? size * 43560 : size;
+      if (error) {
+        console.error('Error generating quote:', error);
+        throw new Error(error.message || 'Failed to generate quote');
+      }
 
-    // AI-simulated quote calculation
-    const baseRatePerSqFt = 0.15 + Math.random() * 0.1; // $0.15-$0.25 per sq ft
-    const laborCost = Math.round(sizeInSqFt * baseRatePerSqFt);
-    
-    // Material costs vary by job type
-    const materialMultiplier = jobDescription.toLowerCase().includes("clearing") ? 0.3 :
-                               jobDescription.toLowerCase().includes("grading") ? 0.25 :
-                               jobDescription.toLowerCase().includes("mulch") ? 0.4 :
-                               0.2;
-    const materialCost = Math.round(laborCost * materialMultiplier);
-    
-    const totalEstimate = laborCost + materialCost;
-    
-    // Completion time based on size
-    const completionTime = Math.max(1, Math.round(sizeInSqFt / 10000) + Math.floor(Math.random() * 3));
+      const quote: GeneratedQuote = {
+        jobTitle: data.jobTitle,
+        laborCost: data.laborCost,
+        materialCost: data.materialCost,
+        totalEstimate: data.totalEstimate,
+        completionTime: data.completionTime,
+        timestamp: new Date(data.timestamp),
+        clientName: data.clientName
+      };
 
-    // Generate job title from description
-    const jobTitle = jobDescription.split(' ').slice(0, 4).join(' ') + 
-                    (jobDescription.split(' ').length > 4 ? '...' : '');
-
-    const quote: GeneratedQuote = {
-      jobTitle: jobTitle || "Landscaping Project",
-      laborCost,
-      materialCost,
-      totalEstimate,
-      completionTime,
-      timestamp: new Date(),
-      clientName
-    };
-
-    setGeneratedQuote(quote);
-    setIsGenerating(false);
-    toast.success("Quote generated successfully!", {
-      description: `Total estimate: $${totalEstimate.toLocaleString()}`,
-    });
+      setGeneratedQuote(quote);
+      toast.success("AI Quote generated successfully!", {
+        description: `Total estimate: $${quote.totalEstimate.toLocaleString()}`,
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to generate quote", {
+        description: error instanceof Error ? error.message : "Please try again",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSaveQuote = () => {
