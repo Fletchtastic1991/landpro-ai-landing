@@ -23,31 +23,37 @@ serve(async (req) => {
     }
 
     // Construct a detailed prompt for OpenAI to analyze the job
-    const prompt = `You are an expert landscaping and land management estimator. Analyze the following job request and provide a detailed cost breakdown:
+    const prompt = `You are LandPro AI — an expert in landscaping and land management quotes.
+Based on the details below, generate a professional, itemized project estimate.
 
 Client: ${clientName}
 Job Description: ${jobDescription}
 Property Size: ${propertySize} ${propertyUnit}
-${materialNotes ? `Material Notes: ${materialNotes}` : ''}
+${materialNotes ? `Materials/Notes: ${materialNotes}` : ''}
 
-Based on industry standards for landscaping and land management, provide:
-1. Estimated labor cost (in USD)
-2. Estimated material cost (in USD)
-3. Suggested completion time (in days)
-4. A brief job title (max 50 characters)
+Provide a detailed breakdown including:
+1. A brief job title (max 50 characters)
+2. Labor cost (in USD)
+3. Equipment cost (in USD) 
+4. Material cost (in USD)
+5. Estimated completion time (in days)
+6. Professional notes about the project
 
 Consider factors like:
 - Property size and terrain complexity
 - Type of work (clearing, grading, mulching, maintenance, etc.)
-- Equipment and labor requirements
+- Equipment rental and labor requirements
 - Material costs specific to the job type
+- Debris removal and finishing work
 
 Respond ONLY with a valid JSON object in this exact format:
 {
   "jobTitle": "Brief descriptive title",
   "laborCost": number,
+  "equipmentCost": number,
   "materialCost": number,
-  "completionTime": number
+  "completionTime": number,
+  "notes": "Professional notes about the project"
 }`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -57,22 +63,30 @@ Respond ONLY with a valid JSON object in this exact format:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-04-14',
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a professional landscaping cost estimator. Always respond with valid JSON only, no markdown formatting or additional text.' 
+            content: 'You are LandPro AI, a professional landscaping cost estimator. Always respond with valid JSON only, no markdown formatting or additional text.' 
           },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_completion_tokens: 500,
+        max_tokens: 500,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        throw new Error('OpenAI rate limit exceeded. Please try again in a moment.');
+      }
+      if (response.status === 402) {
+        throw new Error('OpenAI payment required. Please check your API key billing.');
+      }
+      
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
@@ -93,14 +107,16 @@ Respond ONLY with a valid JSON object in this exact format:
     }
 
     // Calculate total and add metadata
-    const totalEstimate = quoteData.laborCost + quoteData.materialCost;
+    const totalEstimate = quoteData.laborCost + quoteData.equipmentCost + quoteData.materialCost;
     
     const result = {
       jobTitle: quoteData.jobTitle,
       laborCost: Math.round(quoteData.laborCost),
+      equipmentCost: Math.round(quoteData.equipmentCost),
       materialCost: Math.round(quoteData.materialCost),
       totalEstimate: Math.round(totalEstimate),
       completionTime: Math.round(quoteData.completionTime),
+      notes: quoteData.notes || '',
       clientName,
       timestamp: new Date().toISOString()
     };

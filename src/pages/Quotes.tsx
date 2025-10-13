@@ -69,9 +69,11 @@ const statusColors = {
 interface GeneratedQuote {
   jobTitle: string;
   laborCost: number;
+  equipmentCost: number;
   materialCost: number;
   totalEstimate: number;
   completionTime: number;
+  notes: string;
   timestamp: Date;
   clientName: string;
 }
@@ -118,9 +120,11 @@ export default function Quotes() {
       const quote: GeneratedQuote = {
         jobTitle: data.jobTitle,
         laborCost: data.laborCost,
+        equipmentCost: data.equipmentCost,
         materialCost: data.materialCost,
         totalEstimate: data.totalEstimate,
         completionTime: data.completionTime,
+        notes: data.notes,
         timestamp: new Date(data.timestamp),
         clientName: data.clientName
       };
@@ -287,13 +291,19 @@ export default function Quotes() {
                       </div>
                       <Separator />
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Estimated Labor:</span>
+                        <span className="text-sm text-muted-foreground">Labor:</span>
                         <span className="font-semibold text-lg">
                           ${generatedQuote.laborCost.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Estimated Materials:</span>
+                        <span className="text-sm text-muted-foreground">Equipment:</span>
+                        <span className="font-semibold text-lg">
+                          ${generatedQuote.equipmentCost.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Materials:</span>
                         <span className="font-semibold text-lg">
                           ${generatedQuote.materialCost.toLocaleString()}
                         </span>
@@ -314,6 +324,15 @@ export default function Quotes() {
                           {generatedQuote.completionTime} {generatedQuote.completionTime === 1 ? 'day' : 'days'}
                         </span>
                       </div>
+                      {generatedQuote.notes && (
+                        <>
+                          <Separator />
+                          <div className="pt-2">
+                            <span className="text-sm font-medium">Notes:</span>
+                            <p className="text-sm text-muted-foreground mt-1">{generatedQuote.notes}</p>
+                          </div>
+                        </>
+                      )}
                     </div>
                     
                     <div className="flex gap-2 pt-4">
