@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { ChatAssistant } from "@/components/ChatAssistant";
 
 const navItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -113,6 +114,9 @@ export function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Chat Assistant */}
+            <ChatAssistant />
+
             {/* Notifications */}
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
