@@ -14,7 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          client_name: string
+          completion_time: string
+          created_at: string
+          equipment_cost: number
+          id: string
+          job_description: string
+          labor_cost: number
+          material_cost: number
+          material_notes: string | null
+          notes: string | null
+          property_size: string
+          property_unit: string
+          total_cost: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_name: string
+          completion_time: string
+          created_at?: string
+          equipment_cost: number
+          id?: string
+          job_description: string
+          labor_cost: number
+          material_cost: number
+          material_notes?: string | null
+          notes?: string | null
+          property_size: string
+          property_unit: string
+          total_cost: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string
+          completion_time?: string
+          created_at?: string
+          equipment_cost?: number
+          id?: string
+          job_description?: string
+          labor_cost?: number
+          material_cost?: number
+          material_notes?: string | null
+          notes?: string | null
+          property_size?: string
+          property_unit?: string
+          total_cost?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
