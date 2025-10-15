@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { ChatAssistant } from "@/components/ChatAssistant";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const navItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -26,6 +27,7 @@ export function DashboardLayout() {
   const { toast } = useToast();
   const [userEmail, setUserEmail] = useState<string>("");
   const [userInitials, setUserInitials] = useState<string>("U");
+  const { isAdmin } = useAdminCheck();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -89,6 +91,23 @@ export function DashboardLayout() {
                 {item.name}
               </NavLink>
             ))}
+            
+            {/* Admin Link - Only visible to admins */}
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`
+                }
+              >
+                <Shield className="h-5 w-5" />
+                Admin Dashboard
+              </NavLink>
+            )}
           </nav>
 
           {/* Back to Landing */}
