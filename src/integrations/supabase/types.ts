@@ -14,6 +14,97 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          address: string | null
+          client_name: string
+          client_user_id: string | null
+          created_at: string
+          email: string
+          id: string
+          invitation_sent_at: string | null
+          invitation_token: string | null
+          landscaper_id: string
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          client_name: string
+          client_user_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invitation_sent_at?: string | null
+          invitation_token?: string | null
+          landscaper_id: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          client_name?: string
+          client_user_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invitation_sent_at?: string | null
+          invitation_token?: string | null
+          landscaper_id?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_landscaper_id_fkey"
+            columns: ["landscaper_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          quote_id: string | null
+          read: boolean
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          quote_id?: string | null
+          read?: boolean
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          quote_id?: string | null
+          read?: boolean
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           business_name: string | null
@@ -43,6 +134,7 @@ export type Database = {
       }
       quotes: {
         Row: {
+          client_id: string | null
           client_name: string
           completion_time: string
           created_at: string
@@ -55,11 +147,13 @@ export type Database = {
           notes: string | null
           property_size: string
           property_unit: string
+          status: string
           total_cost: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          client_id?: string | null
           client_name: string
           completion_time: string
           created_at?: string
@@ -72,11 +166,13 @@ export type Database = {
           notes?: string | null
           property_size: string
           property_unit: string
+          status?: string
           total_cost: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          client_id?: string | null
           client_name?: string
           completion_time?: string
           created_at?: string
@@ -89,11 +185,20 @@ export type Database = {
           notes?: string | null
           property_size?: string
           property_unit?: string
+          status?: string
           total_cost?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

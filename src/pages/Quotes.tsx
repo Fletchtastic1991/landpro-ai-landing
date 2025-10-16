@@ -46,6 +46,8 @@ interface SavedQuote {
   completion_time: string;
   notes: string;
   created_at: string;
+  status: string;
+  client_id: string | null;
 }
 
 interface GeneratedQuote {
@@ -68,11 +70,37 @@ export default function Quotes() {
   const [isLoading, setIsLoading] = useState(true);
   
   // Form state
+  const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [propertySize, setPropertySize] = useState("");
   const [propertyUnit, setPropertyUnit] = useState("acres");
   const [materialNotes, setMaterialNotes] = useState("");
+
+  // Fetch clients for dropdown
+  const [clients, setClients] = useState<Array<{id: string, client_name: string}>>([]);
+  
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, client_name')
+        .eq('landscaper_id', user.id)
+        .order('client_name');
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
 
   useEffect(() => {
     fetchQuotes();
@@ -160,6 +188,7 @@ export default function Quotes() {
 
       const { error } = await supabase.from('quotes').insert({
         user_id: user.id,
+        client_id: clientId || null,
         client_name: generatedQuote.clientName,
         job_description: jobDescription,
         property_size: propertySize,
@@ -171,18 +200,20 @@ export default function Quotes() {
         total_cost: generatedQuote.totalEstimate,
         completion_time: `${generatedQuote.completionTime} days`,
         notes: generatedQuote.notes,
+        status: 'pending',
       });
 
       if (error) throw error;
 
       toast.success("Quote saved!", {
-        description: "Quote has been saved to your account.",
+        description: "Quote has been saved and sent to your client.",
       });
 
       // Refresh quotes list
       fetchQuotes();
 
       // Reset form
+      setClientId("");
       setClientName("");
       setJobDescription("");
       setPropertySize("");
@@ -227,12 +258,38 @@ export default function Quotes() {
             {!generatedQuote ? (
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="client">Client Name *</Label>
+                  <Label htmlFor="client">Select Client</Label>
+                  <Select 
+                    value={clientId} 
+                    onValueChange={(value) => {
+                      setClientId(value);
+                      const selected = clients.find(c => c.id === value);
+                      if (selected) setClientName(selected.client_name);
+                    }}
+                    disabled={isGenerating}
+                  >
+                    <SelectTrigger id="client">
+                      <SelectValue placeholder="Choose existing client or enter name below" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.client_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client-name">Or Enter Client Name *</Label>
                   <Input 
-                    id="client" 
-                    placeholder="Enter client name"
+                    id="client-name" 
+                    placeholder="Enter new client name"
                     value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
+                    onChange={(e) => {
+                      setClientName(e.target.value);
+                      setClientId("");
+                    }}
                     disabled={isGenerating}
                   />
                 </div>
@@ -465,6 +522,7 @@ export default function Quotes() {
                   <TableHead>Job Description</TableHead>
                   <TableHead>Property Size</TableHead>
                   <TableHead>Total Estimate</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                 </TableRow>
               </TableHeader>

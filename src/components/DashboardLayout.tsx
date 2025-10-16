@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home, Shield } from "lucide-react";
+import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home, Shield, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { ChatAssistant } from "@/components/ChatAssistant";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useQuery } from "@tanstack/react-query";
 
 const navItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -28,6 +29,29 @@ export function DashboardLayout() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [userInitials, setUserInitials] = useState<string>("U");
   const { isAdmin } = useAdminCheck();
+
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
+  // Check if user is a client
+  const { data: isClient } = useQuery({
+    queryKey: ["isClient", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("client_user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -106,6 +130,23 @@ export function DashboardLayout() {
               >
                 <Shield className="h-5 w-5" />
                 Admin Dashboard
+              </NavLink>
+            )}
+            
+            {/* Client Portal Link - Only visible to clients */}
+            {isClient && (
+              <NavLink
+                to="/client-portal"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`
+                }
+              >
+                <UserCircle className="h-5 w-5" />
+                Client Portal
               </NavLink>
             )}
           </nav>
