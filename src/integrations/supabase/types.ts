@@ -67,6 +67,69 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          due_date: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          quote_id: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_payment_link: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          due_date: string
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          quote_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_payment_link?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          quote_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_payment_link?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           created_at: string
@@ -226,6 +289,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invoice_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
