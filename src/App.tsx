@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Quotes from "./pages/Quotes";
 import Jobs from "./pages/Jobs";
 import Clients from "./pages/Clients";
+import Invoices from "./pages/Invoices";
 import SettingsPage from "./pages/SettingsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Admin from "./pages/Admin";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="quotes" element={<Quotes />} />
             <Route path="jobs" element={<Jobs />} />
             <Route path="clients" element={<Clients />} />
+            <Route path="invoices" element={<Invoices />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="/admin" element={<ProtectedRoute><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />

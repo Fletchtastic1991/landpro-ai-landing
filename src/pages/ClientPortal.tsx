@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Clock, MessageSquare } from "lucide-react";
+import { CheckCircle, XCircle, Clock, MessageSquare, DollarSign, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 export default function ClientPortal() {
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
@@ -39,6 +40,22 @@ export default function ClientPortal() {
       if (!clientProfile?.id) return [];
       const { data, error } = await supabase
         .from("quotes")
+        .select("*")
+        .eq("client_id", clientProfile.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!clientProfile?.id,
+  });
+
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["clientInvoices", clientProfile?.id],
+    queryFn: async () => {
+      if (!clientProfile?.id) return [];
+      const { data, error } = await supabase
+        .from("invoices")
         .select("*")
         .eq("client_id", clientProfile.id)
         .order("created_at", { ascending: false });
@@ -211,6 +228,79 @@ export default function ClientPortal() {
                         <XCircle className="mr-2 h-4 w-4" />
                         Decline Quote
                       </Button>
+                    </div>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Invoices Section */}
+        <Card className="p-6 mb-8">
+          <h2 className="text-2xl font-bold mb-6 flex items-center">
+            <DollarSign className="mr-2 h-6 w-6 text-primary" />
+            Invoices & Payments
+          </h2>
+
+          {invoices.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="text-lg">No invoices yet.</p>
+              <p className="text-sm mt-2">Your invoices will appear here when sent by {landscaperName}.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {invoices.map((invoice) => (
+                <Card key={invoice.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-bold text-foreground">
+                          Invoice {invoice.invoice_number}
+                        </h3>
+                        <Badge className={
+                          invoice.status === "draft"
+                            ? "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                            : invoice.status === "sent"
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                            : invoice.status === "paid"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                        }>
+                          {invoice.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Issue Date: {new Date(invoice.issue_date).toLocaleDateString()} • 
+                        Due Date: {new Date(invoice.due_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-primary">
+                        ${Number(invoice.amount).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {invoice.status === "sent" && invoice.stripe_payment_link && (
+                    <div className="mt-4">
+                      <Button
+                        onClick={() => window.open(invoice.stripe_payment_link!, "_blank")}
+                        className="w-full bg-primary hover:bg-primary/90"
+                      >
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        Pay Now with Stripe
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {invoice.status === "paid" && (
+                    <div className="mt-4 p-3 bg-green-50 dark:bg-green-950 rounded-lg flex items-center">
+                      <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                        Payment received - Thank you!
+                      </span>
                     </div>
                   )}
                 </Card>

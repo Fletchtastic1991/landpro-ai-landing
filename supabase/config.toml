@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.chat]
 verify_jwt = false
+
+[functions.create-payment-link]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
