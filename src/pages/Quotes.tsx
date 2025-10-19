@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,31 +33,45 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 
-interface SavedQuote {
-  id: string;
-  client_name: string;
-  job_description: string;
-  property_size: string;
-  property_unit: string;
-  labor_cost: number;
-  equipment_cost: number;
-  material_cost: number;
-  total_cost: number;
-  completion_time: string;
-  notes: string;
-  created_at: string;
-  status: string;
-  client_id: string | null;
-}
+const quotes = [
+  {
+    id: 1,
+    client: "Green Acres Property",
+    address: "123 Oak Street, Portland",
+    jobType: "Lawn Maintenance",
+    estimate: "$1,200",
+    status: "pending",
+  },
+  {
+    id: 2,
+    client: "Mountain View Ranch",
+    address: "456 Pine Road, Eugene",
+    jobType: "Land Clearing",
+    estimate: "$8,500",
+    status: "sent",
+  },
+  {
+    id: 3,
+    client: "Riverside Estate",
+    address: "789 River Drive, Salem",
+    jobType: "Tree Removal",
+    estimate: "$3,400",
+    status: "approved",
+  },
+];
+
+const statusColors = {
+  pending: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20",
+  sent: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+  approved: "bg-green-500/10 text-green-700 border-green-500/20",
+};
 
 interface GeneratedQuote {
   jobTitle: string;
   laborCost: number;
-  equipmentCost: number;
   materialCost: number;
   totalEstimate: number;
   completionTime: number;
-  notes: string;
   timestamp: Date;
   clientName: string;
 }
@@ -66,63 +80,14 @@ export default function Quotes() {
   const [open, setOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuote, setGeneratedQuote] = useState<GeneratedQuote | null>(null);
-  const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [quoteHistory, setQuoteHistory] = useState<GeneratedQuote[]>([]);
   
   // Form state
-  const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [propertySize, setPropertySize] = useState("");
   const [propertyUnit, setPropertyUnit] = useState("acres");
   const [materialNotes, setMaterialNotes] = useState("");
-
-  // Fetch clients for dropdown
-  const [clients, setClients] = useState<Array<{id: string, client_name: string}>>([]);
-  
-  useEffect(() => {
-    fetchClients();
-  }, []);
-
-  const fetchClients = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('clients')
-        .select('id, client_name')
-        .eq('landscaper_id', user.id)
-        .order('client_name');
-
-      if (error) throw error;
-      setClients(data || []);
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchQuotes();
-  }, []);
-
-  const fetchQuotes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('quotes')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      setSavedQuotes(data || []);
-    } catch (error) {
-      console.error('Error fetching quotes:', error);
-      toast.error("Failed to load quotes");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleGenerateQuote = async () => {
     if (!clientName || !jobDescription || !propertySize) {
@@ -153,11 +118,9 @@ export default function Quotes() {
       const quote: GeneratedQuote = {
         jobTitle: data.jobTitle,
         laborCost: data.laborCost,
-        equipmentCost: data.equipmentCost,
         materialCost: data.materialCost,
         totalEstimate: data.totalEstimate,
         completionTime: data.completionTime,
-        notes: data.notes,
         timestamp: new Date(data.timestamp),
         clientName: data.clientName
       };
@@ -176,55 +139,19 @@ export default function Quotes() {
     }
   };
 
-  const handleSaveQuote = async () => {
-    if (!generatedQuote) return;
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("You must be logged in to save quotes");
-        return;
-      }
-
-      const { error } = await supabase.from('quotes').insert({
-        user_id: user.id,
-        client_id: clientId || null,
-        client_name: generatedQuote.clientName,
-        job_description: jobDescription,
-        property_size: propertySize,
-        property_unit: propertyUnit,
-        material_notes: materialNotes,
-        labor_cost: generatedQuote.laborCost,
-        equipment_cost: generatedQuote.equipmentCost,
-        material_cost: generatedQuote.materialCost,
-        total_cost: generatedQuote.totalEstimate,
-        completion_time: `${generatedQuote.completionTime} days`,
-        notes: generatedQuote.notes,
-        status: 'pending',
-      });
-
-      if (error) throw error;
-
+  const handleSaveQuote = () => {
+    if (generatedQuote) {
+      setQuoteHistory([generatedQuote, ...quoteHistory.slice(0, 4)]);
       toast.success("Quote saved!", {
-        description: "Quote has been saved and sent to your client.",
+        description: "Quote has been added to your history.",
       });
-
-      // Refresh quotes list
-      fetchQuotes();
-
       // Reset form
-      setClientId("");
       setClientName("");
       setJobDescription("");
       setPropertySize("");
       setMaterialNotes("");
       setGeneratedQuote(null);
       setOpen(false);
-    } catch (error) {
-      console.error('Error saving quote:', error);
-      toast.error("Failed to save quote", {
-        description: error instanceof Error ? error.message : "Please try again",
-      });
     }
   };
 
@@ -258,38 +185,12 @@ export default function Quotes() {
             {!generatedQuote ? (
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="client">Select Client</Label>
-                  <Select 
-                    value={clientId} 
-                    onValueChange={(value) => {
-                      setClientId(value);
-                      const selected = clients.find(c => c.id === value);
-                      if (selected) setClientName(selected.client_name);
-                    }}
-                    disabled={isGenerating}
-                  >
-                    <SelectTrigger id="client">
-                      <SelectValue placeholder="Choose existing client or enter name below" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.client_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="client-name">Or Enter Client Name *</Label>
+                  <Label htmlFor="client">Client Name *</Label>
                   <Input 
-                    id="client-name" 
-                    placeholder="Enter new client name"
+                    id="client" 
+                    placeholder="Enter client name"
                     value={clientName}
-                    onChange={(e) => {
-                      setClientName(e.target.value);
-                      setClientId("");
-                    }}
+                    onChange={(e) => setClientName(e.target.value)}
                     disabled={isGenerating}
                   />
                 </div>
@@ -386,19 +287,13 @@ export default function Quotes() {
                       </div>
                       <Separator />
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Labor:</span>
+                        <span className="text-sm text-muted-foreground">Estimated Labor:</span>
                         <span className="font-semibold text-lg">
                           ${generatedQuote.laborCost.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Equipment:</span>
-                        <span className="font-semibold text-lg">
-                          ${generatedQuote.equipmentCost.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Materials:</span>
+                        <span className="text-sm text-muted-foreground">Estimated Materials:</span>
                         <span className="font-semibold text-lg">
                           ${generatedQuote.materialCost.toLocaleString()}
                         </span>
@@ -419,15 +314,6 @@ export default function Quotes() {
                           {generatedQuote.completionTime} {generatedQuote.completionTime === 1 ? 'day' : 'days'}
                         </span>
                       </div>
-                      {generatedQuote.notes && (
-                        <>
-                          <Separator />
-                          <div className="pt-2">
-                            <span className="text-sm font-medium">Notes:</span>
-                            <p className="text-sm text-muted-foreground mt-1">{generatedQuote.notes}</p>
-                          </div>
-                        </>
-                      )}
                     </div>
                     
                     <div className="flex gap-2 pt-4">
@@ -459,43 +345,37 @@ export default function Quotes() {
         </Dialog>
       </div>
 
-      {savedQuotes.length > 0 && (
+      {quoteHistory.length > 0 && (
         <Card className="border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Recent Saved Quotes
+              Recent AI Quotes
             </CardTitle>
-            <CardDescription>Your saved quotes from the database</CardDescription>
+            <CardDescription>Last 5 quotes generated with AI</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {savedQuotes.slice(0, 5).map((quote) => (
-                  <div key={quote.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{quote.client_name}</p>
-                      <p className="text-sm text-muted-foreground">{quote.job_description.substring(0, 50)}...</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(quote.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-lg text-primary">
-                        ${Number(quote.total_cost).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {quote.completion_time}
-                      </p>
-                    </div>
+            <div className="space-y-3">
+              {quoteHistory.map((quote, index) => (
+                <div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{quote.clientName}</p>
+                    <p className="text-sm text-muted-foreground">{quote.jobTitle}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {quote.timestamp.toLocaleString()}
+                    </p>
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-primary">
+                      ${quote.totalEstimate.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {quote.completionTime} days
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -503,44 +383,34 @@ export default function Quotes() {
       <Card>
         <CardHeader>
           <CardTitle>All Quotes</CardTitle>
-          <CardDescription>Complete list of your saved quotes</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : savedQuotes.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No quotes yet. Generate your first AI quote to get started!</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Job Description</TableHead>
-                  <TableHead>Property Size</TableHead>
-                  <TableHead>Total Estimate</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Client</TableHead>
+                <TableHead>Property Address</TableHead>
+                <TableHead>Job Type</TableHead>
+                <TableHead>Estimate</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {quotes.map((quote) => (
+                <TableRow key={quote.id}>
+                  <TableCell className="font-medium">{quote.client}</TableCell>
+                  <TableCell>{quote.address}</TableCell>
+                  <TableCell>{quote.jobType}</TableCell>
+                  <TableCell className="font-semibold">{quote.estimate}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={statusColors[quote.status]}>
+                      {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+                    </Badge>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {savedQuotes.map((quote) => (
-                  <TableRow key={quote.id}>
-                    <TableCell className="font-medium">{quote.client_name}</TableCell>
-                    <TableCell>{quote.job_description.substring(0, 40)}...</TableCell>
-                    <TableCell>{quote.property_size} {quote.property_unit}</TableCell>
-                    <TableCell className="font-semibold">
-                      ${Number(quote.total_cost).toLocaleString()}
-                    </TableCell>
-                    <TableCell>{new Date(quote.created_at).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

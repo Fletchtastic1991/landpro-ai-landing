@@ -4,19 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { DashboardLayout } from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Quotes from "./pages/Quotes";
 import Jobs from "./pages/Jobs";
 import Clients from "./pages/Clients";
-import Invoices from "./pages/Invoices";
 import SettingsPage from "./pages/SettingsPage";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Admin from "./pages/Admin";
-import AdminRoute from "./components/AdminRoute";
-import ClientPortal from "./pages/ClientPortal";
 
 const queryClient = new QueryClient();
 
@@ -28,17 +22,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="quotes" element={<Quotes />} />
             <Route path="jobs" element={<Jobs />} />
             <Route path="clients" element={<Clients />} />
-            <Route path="invoices" element={<Invoices />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
-          <Route path="/admin" element={<ProtectedRoute><AdminRoute><Admin /></AdminRoute></ProtectedRoute>} />
-          <Route path="/client-portal" element={<ProtectedRoute><ClientPortal /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

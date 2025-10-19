@@ -2,41 +2,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Calendar, Users, Megaphone, Trees, Scissors, Home, CheckCircle, LayoutDashboard, LogIn } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Sparkles, Calendar, Users, Megaphone, Trees, Scissors, Home, CheckCircle, LayoutDashboard } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
 import heroImage from "@/assets/hero-landscape.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     company: "",
     email: "",
     message: "",
   });
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        navigate("/dashboard");
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        navigate("/dashboard");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,21 +30,12 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary-foreground">LandPro AI</h1>
           <Button 
-            onClick={() => navigate(user ? "/dashboard" : "/auth")}
+            onClick={() => navigate("/dashboard")}
             variant="outline"
             className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 backdrop-blur-sm gap-2"
           >
-            {user ? (
-              <>
-                <LayoutDashboard className="h-4 w-4" />
-                View Dashboard
-              </>
-            ) : (
-              <>
-                <LogIn className="h-4 w-4" />
-                Log In
-              </>
-            )}
+            <LayoutDashboard className="h-4 w-4" />
+            View Dashboard
           </Button>
         </div>
       </nav>
