@@ -1,489 +1,283 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Calendar, Users, Megaphone, Trees, Scissors, Home, CheckCircle, LayoutDashboard } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Brain, TrendingUp, Map, Leaf, ArrowRight, CheckCircle2, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import heroImage from "@/assets/hero-landscape.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    company: "",
-    email: "",
-    message: "",
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Thanks for joining the waitlist! We'll be in touch soon.");
-    setFormData({ name: "", company: "", email: "", message: "" });
-  };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation Bar */}
-      <nav className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-primary/20 to-transparent backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary-foreground">LandPro AI</h1>
-          <Button 
-            onClick={() => navigate("/dashboard")}
-            variant="outline"
-            className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 backdrop-blur-sm gap-2"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-            View Dashboard
-          </Button>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Brain className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold">LandPro AI</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#solutions" className="text-muted-foreground hover:text-foreground transition-colors">
+              Solutions
+            </a>
+            <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">
+              About
+            </a>
+            <a href="#contact" className="text-muted-foreground hover:text-foreground transition-colors">
+              Contact
+            </a>
+            <Button 
+              onClick={() => navigate("/dashboard")}
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            >
+              Dashboard
+            </Button>
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/60 to-background" />
-        </div>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(140_60%_45%/0.1),transparent_50%)]" />
         
-        <div className="relative z-10 container mx-auto px-4 text-center animate-fade-in">
-          <h1 className="text-5xl md:text-7xl font-bold text-primary-foreground mb-6">
-            Work Smarter. Manage Land Better.
-          </h1>
-          <p className="text-xl md:text-2xl text-primary-foreground/90 mb-8 max-w-3xl mx-auto">
-            LandPro AI helps landscapers and land management pros automate quotes, 
-            organize jobs, and win more clients — all in one simple AI-powered tool.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-8 py-6 transition-transform hover:scale-105"
-            >
-              Get Early Access
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 text-lg px-8 py-6 transition-transform hover:scale-105 backdrop-blur-sm"
-            >
-              Watch Demo
-            </Button>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center animate-fade-in">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground">
+              Empowering the Future of Land Management with AI
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto">
+              LandPro AI delivers precision, efficiency, and insight through cutting-edge artificial intelligence
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-[0_0_30px_hsl(140_60%_45%/0.3)] hover:shadow-[0_0_50px_hsl(140_60%_45%/0.5)] transition-all"
+              >
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button 
+                size="lg"
+                variant="outline"
+                className="border-border text-foreground text-lg px-8 py-6 hover:bg-muted"
+              >
+                Request a Demo
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="py-24 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+            <div className="animate-fade-in">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                AI-Powered Solutions for Smarter Land Operations
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                LandPro AI harnesses machine learning and geospatial analytics to streamline land assessment, 
+                automate reporting, and enhance decision-making. Our cutting-edge platform transforms complex 
+                data into actionable intelligence.
+              </p>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 rounded-lg blur-3xl" />
+              <div className="relative bg-card border border-border rounded-lg p-8 backdrop-blur-sm">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary mb-2">40%</div>
+                    <div className="text-sm text-muted-foreground">Cost Reduction</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary mb-2">10x</div>
+                    <div className="text-sm text-muted-foreground">Faster Analysis</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary mb-2">99%</div>
+                    <div className="text-sm text-muted-foreground">Accuracy Rate</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-primary mb-2">24/7</div>
+                    <div className="text-sm text-muted-foreground">AI Availability</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-foreground animate-slide-up">
-            Powerful Features for Pro Results
-          </h2>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card className="border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-                  <Sparkles className="w-6 h-6 text-accent" />
-                </div>
-                <CardTitle className="text-2xl">AI Job Quoting</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  Instantly generate accurate quotes from job descriptions or property sizes. 
-                  No more manual calculations.
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in [animation-delay:100ms]">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-                  <Calendar className="w-6 h-6 text-accent" />
-                </div>
-                <CardTitle className="text-2xl">Smart Scheduling</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  Automatically plan your week and notify clients of updates. 
-                  Stay organized effortlessly.
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in [animation-delay:200ms]">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-accent" />
-                </div>
-                <CardTitle className="text-2xl">Customer Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  Keep all your client info and messages in one place. 
-                  Never lose track of a customer again.
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-2 animate-fade-in [animation-delay:300ms]">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-                  <Megaphone className="w-6 h-6 text-accent" />
-                </div>
-                <CardTitle className="text-2xl">Marketing Made Easy</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  Generate posts, emails, and ads to grow your business. 
-                  AI-powered marketing that works.
-                </CardDescription>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Use Cases Section */}
-      <section className="py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-foreground">
-            Perfect for Every Land Professional
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
-            <div className="text-center animate-slide-up">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Trees className="w-10 h-10 text-primary" />
-              </div>
-              <h3 className="text-2xl font-semibold mb-3 text-foreground">Landscaping Companies</h3>
-              <p className="text-muted-foreground">
-                From design to maintenance, manage every aspect of your landscaping business.
-              </p>
-            </div>
-
-            <div className="text-center animate-slide-up [animation-delay:100ms]">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Scissors className="w-10 h-10 text-primary" />
-              </div>
-              <h3 className="text-2xl font-semibold mb-3 text-foreground">Land Clearing Services</h3>
-              <p className="text-muted-foreground">
-                Quote big jobs fast and manage complex clearing projects with confidence.
-              </p>
-            </div>
-
-            <div className="text-center animate-slide-up [animation-delay:200ms]">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Home className="w-10 h-10 text-primary" />
-              </div>
-              <h3 className="text-2xl font-semibold mb-3 text-foreground">Property Maintenance Pros</h3>
-              <p className="text-muted-foreground">
-                Keep properties beautiful year-round with smart scheduling and client communication.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-foreground">
-            Trusted by Land Professionals
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <Card className="border-border bg-card hover:shadow-lg transition-shadow">
-              <CardContent className="pt-6">
-                <p className="text-lg italic mb-4 text-foreground">
-                  "LandPro AI cut my quoting time in half."
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                    <span className="text-primary font-semibold">JT</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Jake T.</p>
-                    <p className="text-sm text-muted-foreground">JT Landworks</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card hover:shadow-lg transition-shadow">
-              <CardContent className="pt-6">
-                <p className="text-lg italic mb-4 text-foreground">
-                  "I finally have everything in one place. Game changer."
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                    <span className="text-primary font-semibold">ML</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Marcus L.</p>
-                    <p className="text-sm text-muted-foreground">GreenEdge Landscaping</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card hover:shadow-lg transition-shadow">
-              <CardContent className="pt-6">
-                <p className="text-lg italic mb-4 text-foreground">
-                  "This is the AI I didn't know I needed."
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mr-3">
-                    <span className="text-primary font-semibold">SP</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Sarah P.</p>
-                    <p className="text-sm text-muted-foreground">ProCut Outdoors</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-foreground">
-            Simple, Transparent Pricing
-          </h2>
-          <p className="text-xl text-center text-muted-foreground mb-16">
-            Choose the plan that fits your business
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <Card className="border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <CardTitle className="text-2xl">Starter</CardTitle>
-                <CardDescription>For solo owner-operators</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-6">
-                  <span className="text-5xl font-bold text-foreground">$29</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">AI job quoting</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Basic scheduling</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Up to 25 clients</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Email support</span>
-                  </li>
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Get Started
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="border-accent border-2 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground px-4 py-1 rounded-full text-sm font-semibold">
-                Most Popular
-              </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">Pro</CardTitle>
-                <CardDescription>For growing teams</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-6">
-                  <span className="text-5xl font-bold text-foreground">$79</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Everything in Starter</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Advanced scheduling</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Unlimited clients</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Marketing automation</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Priority support</span>
-                  </li>
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                  Get Started
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <CardHeader>
-                <CardTitle className="text-2xl">Business</CardTitle>
-                <CardDescription>For full-service companies</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-6">
-                  <span className="text-5xl font-bold text-foreground">$149</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Everything in Pro</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Team collaboration</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Custom integrations</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Advanced analytics</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-accent mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">Dedicated account manager</span>
-                  </li>
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Get Started
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Waitlist Form Section */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-foreground">
-              Join the Waitlist
+      <section id="solutions" className="py-24 bg-background">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Core AI Capabilities
             </h2>
-            <p className="text-xl text-center text-muted-foreground mb-12">
-              Be among the first to experience LandPro AI
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Enterprise-grade intelligence for modern land management
             </p>
-            
-            <Card className="border-border">
-              <CardContent className="pt-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-                      Name *
-                    </label>
-                    <Input
-                      id="name"
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full"
-                      placeholder="John Smith"
-                    />
-                  </div>
+          </div>
 
-                  <div>
-                    <label htmlFor="company" className="block text-sm font-medium text-foreground mb-2">
-                      Company *
-                    </label>
-                    <Input
-                      id="company"
-                      type="text"
-                      required
-                      value={formData.company}
-                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      className="w-full"
-                      placeholder="Smith Landscaping"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                      Email *
-                    </label>
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full"
-                      placeholder="john@smithlandscaping.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
-                      Message (Optional)
-                    </label>
-                    <Textarea
-                      id="message"
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      className="w-full min-h-[100px]"
-                      placeholder="Tell us about your business..."
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6"
-                  >
-                    Join Waitlist
-                  </Button>
-                </form>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            <Card className="bg-card border-border hover:border-primary/50 transition-all group">
+              <CardHeader>
+                <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <TrendingUp className="w-7 h-7 text-primary" />
+                </div>
+                <CardTitle className="text-xl">Predictive Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">
+                  Forecast land trends and optimize resource allocation with advanced machine learning models
+                </CardDescription>
               </CardContent>
             </Card>
+
+            <Card className="bg-card border-border hover:border-primary/50 transition-all group">
+              <CardHeader>
+                <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Map className="w-7 h-7 text-primary" />
+                </div>
+                <CardTitle className="text-xl">Geospatial Intelligence</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">
+                  Process satellite imagery and terrain data for comprehensive spatial analysis
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border hover:border-primary/50 transition-all group">
+              <CardHeader>
+                <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Brain className="w-7 h-7 text-primary" />
+                </div>
+                <CardTitle className="text-xl">Automated Land Insights</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">
+                  Generate detailed reports and recommendations automatically from raw data
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border hover:border-primary/50 transition-all group">
+              <CardHeader>
+                <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Leaf className="w-7 h-7 text-primary" />
+                </div>
+                <CardTitle className="text-xl">Sustainability Tracking</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">
+                  Monitor environmental impact and ensure compliance with ESG standards
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-24 bg-gradient-to-b from-background to-muted/30 border-y border-primary/20">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">
+              Transform Your Operations
+            </h2>
+            
+            <div className="space-y-8">
+              <div className="flex items-start gap-4 group">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <CheckCircle2 className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">Reduce operational costs by 40%</h3>
+                  <p className="text-muted-foreground text-lg">
+                    Eliminate manual processes and optimize resource utilization with intelligent automation
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 group">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <CheckCircle2 className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">Make data-driven decisions instantly</h3>
+                  <p className="text-muted-foreground text-lg">
+                    Access real-time insights and recommendations powered by advanced AI algorithms
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 group">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <CheckCircle2 className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">Stay ahead with adaptive AI models</h3>
+                  <p className="text-muted-foreground text-lg">
+                    Continuously learning systems that evolve with your business needs and industry changes
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-background relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl" />
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Ready to transform your land operations with AI?
+            </h2>
+            <p className="text-xl text-muted-foreground mb-10">
+              Join leading organizations leveraging artificial intelligence for smarter land management
+            </p>
+            <Button 
+              size="lg"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 shadow-[0_0_30px_hsl(140_60%_45%/0.3)] hover:shadow-[0_0_50px_hsl(140_60%_45%/0.5)] transition-all"
+            >
+              Schedule a Consultation
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h3 className="text-2xl font-bold mb-4">LandPro AI</h3>
-            <p className="text-primary-foreground/80 mb-6">
-              Built for the Pros Who Build the Land
-            </p>
-            <div className="flex justify-center gap-8 mb-6 text-sm">
-              <a href="#features" className="hover:text-accent transition-colors">Features</a>
-              <a href="#pricing" className="hover:text-accent transition-colors">Pricing</a>
-              <a href="#about" className="hover:text-accent transition-colors">About</a>
-              <a href="#contact" className="hover:text-accent transition-colors">Contact</a>
+      <footer id="contact" className="py-12 bg-muted/30 border-t border-border">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Brain className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-bold">LandPro AI</span>
             </div>
-            <p className="text-primary-foreground/60 text-sm">
-              © 2025 LandPro AI — Built for the Pros Who Build the Land.
-            </p>
+            
+            <div className="flex items-center gap-6">
+              <a href="mailto:contact@landproai.com" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+                <Mail className="w-5 h-5" />
+                <span>contact@landproai.com</span>
+              </a>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+            <p>&copy; 2025 LandPro AI. All rights reserved.</p>
           </div>
         </div>
       </footer>
