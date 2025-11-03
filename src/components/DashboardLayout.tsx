@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,6 +14,7 @@ const navItems = [
   { name: "Quotes", path: "/dashboard/quotes", icon: FileText },
   { name: "Jobs", path: "/dashboard/jobs", icon: Briefcase },
   { name: "Clients", path: "/dashboard/clients", icon: Users },
+  { name: "AI Chat", path: "/dashboard/chat", icon: Brain },
   { name: "Settings", path: "/dashboard/settings", icon: Settings },
 ];
 

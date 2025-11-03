@@ -11,6 +11,7 @@ import Quotes from "./pages/Quotes";
 import Jobs from "./pages/Jobs";
 import Clients from "./pages/Clients";
 import SettingsPage from "./pages/SettingsPage";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="quotes" element={<Quotes />} />
             <Route path="jobs" element={<Jobs />} />
             <Route path="clients" element={<Clients />} />
+            <Route path="chat" element={<Chat />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
