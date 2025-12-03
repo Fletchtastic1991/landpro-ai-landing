@@ -1,5 +1,5 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home, Brain } from "lucide-react";
+import { Outlet, NavLink, useNavigate, Navigate } from "react-router-dom";
+import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home, Brain, FolderKanban, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -8,9 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Projects", path: "/dashboard/projects", icon: FolderKanban },
   { name: "Quotes", path: "/dashboard/quotes", icon: FileText },
   { name: "Jobs", path: "/dashboard/jobs", icon: Briefcase },
   { name: "Clients", path: "/dashboard/clients", icon: Users },
@@ -20,6 +22,24 @@ const navItems = [
 
 export function DashboardLayout() {
   const navigate = useNavigate();
+  const { user, isLoading, signOut } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -102,7 +122,7 @@ export function DashboardLayout() {
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
+                <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
                 </DropdownMenuItem>
