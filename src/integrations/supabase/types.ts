@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      analysis: {
+        Row: {
+          created_at: string
+          hazards: Json | null
+          id: string
+          land_classification: Json | null
+          path: Json | null
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          hazards?: Json | null
+          id?: string
+          land_classification?: Json | null
+          path?: Json | null
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          hazards?: Json | null
+          id?: string
+          land_classification?: Json | null
+          path?: Json | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -195,6 +230,42 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          acreage: number | null
+          boundary: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acreage?: number | null
+          boundary?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acreage?: number | null
+          boundary?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       quotes: {
         Row: {
           client_id: string | null
@@ -259,6 +330,38 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          pdf_url: string | null
+          project_id: string
+          report_json: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pdf_url?: string | null
+          project_id: string
+          report_json: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pdf_url?: string | null
+          project_id?: string
+          report_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

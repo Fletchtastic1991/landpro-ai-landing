@@ -26,11 +26,11 @@ const Index = () => {
               Contact
             </a>
             <Button 
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/auth")}
               variant="outline"
               className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             >
-              Dashboard
+              Sign In
             </Button>
           </div>
         </div>
@@ -52,6 +52,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg"
+                onClick={() => navigate("/auth")}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-[0_0_30px_hsl(140_60%_45%/0.3)] hover:shadow-[0_0_50px_hsl(140_60%_45%/0.5)] transition-all"
               >
                 Get Started
@@ -246,9 +247,10 @@ const Index = () => {
             </p>
             <Button 
               size="lg"
+              onClick={() => navigate("/auth")}
               className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 shadow-[0_0_30px_hsl(140_60%_45%/0.3)] hover:shadow-[0_0_50px_hsl(140_60%_45%/0.5)] transition-all"
             >
-              Schedule a Consultation
+              Get Started Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
