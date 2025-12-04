@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, Navigate } from "react-router-dom";
-import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home, Brain, FolderKanban, Loader2 } from "lucide-react";
+import { LayoutDashboard, FileText, Briefcase, Users, Settings, Bell, User, LogOut, Home, Brain, FolderKanban, Loader2, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Map Explorer", path: "/dashboard/map", icon: Map },
   { name: "Projects", path: "/dashboard/projects", icon: FolderKanban },
   { name: "Quotes", path: "/dashboard/quotes", icon: FileText },
   { name: "Jobs", path: "/dashboard/jobs", icon: Briefcase },

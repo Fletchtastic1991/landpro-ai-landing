@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
 import * as turf from "@turf/turf";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
+import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import { Button } from "@/components/ui/button";
 import { Loader2, Save, Trash2, Maximize2 } from "lucide-react";
 
@@ -75,6 +77,18 @@ export default function MapDrawing({
       }),
       "top-right"
     );
+
+    // Add geocoder search control
+    const geocoder = new MapboxGeocoder({
+      accessToken: MAPBOX_TOKEN,
+      marker: true,
+      placeholder: "Search for an address or location...",
+      flyTo: {
+        speed: 1.5,
+        zoom: 16,
+      },
+    });
+    map.current.addControl(geocoder, "top-left");
 
     if (!readOnly) {
       draw.current = new MapboxDraw({
