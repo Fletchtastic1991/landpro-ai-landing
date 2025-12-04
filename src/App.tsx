@@ -16,6 +16,7 @@ import Auth from "./pages/Auth";
 import Projects from "./pages/Projects";
 import NewProject from "./pages/NewProject";
 import ProjectDetail from "./pages/ProjectDetail";
+import MapExplorer from "./pages/MapExplorer";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="map" element={<MapExplorer />} />
             <Route path="projects" element={<Projects />} />
             <Route path="projects/new" element={<NewProject />} />
             <Route path="projects/:id" element={<ProjectDetail />} />
