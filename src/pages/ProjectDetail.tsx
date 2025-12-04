@@ -8,7 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Loader2, MapPin, FileText, AlertTriangle, Map } from "lucide-react";
 import { format } from "date-fns";
-
+import MapDrawing from "@/components/MapDrawing";
+import type { Json } from "@/integrations/supabase/types";
 interface Project {
   id: string;
   name: string;
@@ -192,20 +193,36 @@ export default function ProjectDetail() {
                 Property Map
               </CardTitle>
               <CardDescription>
-                Draw boundaries to define your property area
+                Draw boundaries to define your property area. Click the polygon tool to start drawing.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-96 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
-                <div className="text-center">
-                  <Map className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Map interface coming soon
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Add your Mapbox token to enable the interactive map
-                  </p>
-                </div>
+              <div className="h-[500px] rounded-lg overflow-hidden">
+                <MapDrawing
+                  initialBoundary={project.boundary as GeoJSON.Polygon | null}
+                  initialAcreage={project.acreage}
+                  onSave={async (boundary, acreage) => {
+                    const { error } = await supabase
+                      .from("projects")
+                      .update({ 
+                        boundary: boundary as unknown as Json, 
+                        acreage,
+                        status: "active" 
+                      })
+                      .eq("id", project.id);
+
+                    if (error) {
+                      toast({
+                        title: "Error saving boundary",
+                        description: error.message,
+                        variant: "destructive",
+                      });
+                    } else {
+                      toast({ title: "Boundary saved successfully!" });
+                      setProject({ ...project, boundary, acreage, status: "active" });
+                    }
+                  }}
+                />
               </div>
             </CardContent>
           </Card>
