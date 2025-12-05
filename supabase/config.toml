@@ -2,3 +2,6 @@ project_id = "awmjdbpaknxzhkkuqxsu"
 
 [functions.generate-quote]
 verify_jwt = false
+
+[functions.analyze-land]
+verify_jwt = false
