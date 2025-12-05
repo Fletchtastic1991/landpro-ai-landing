@@ -49,6 +49,7 @@ interface MapDrawingProps {
   initialBoundary?: GeoJSON.Polygon | null;
   initialAcreage?: number | null;
   onSave?: (boundary: GeoJSON.Polygon, acreage: number) => Promise<void>;
+  onCreateProject?: (boundary: GeoJSON.Polygon, acreage: number, analysis?: LandAnalysis) => void;
   readOnly?: boolean;
 }
 
@@ -56,6 +57,7 @@ export default function MapDrawing({
   initialBoundary,
   initialAcreage,
   onSave,
+  onCreateProject,
   readOnly = false,
 }: MapDrawingProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -534,7 +536,7 @@ export default function MapDrawing({
 
       {/* Action Buttons */}
       {!readOnly && (
-        <div className="absolute bottom-4 left-4 flex gap-2">
+        <div className="absolute bottom-4 left-4 flex gap-2 flex-wrap">
           <Button
             variant="secondary"
             size="sm"
@@ -579,6 +581,14 @@ export default function MapDrawing({
                 <Save className="h-4 w-4 mr-1" />
               )}
               Save Boundary
+            </Button>
+          )}
+          {onCreateProject && currentPolygon && acreage && (
+            <Button
+              size="sm"
+              onClick={() => onCreateProject(currentPolygon, acreage, analysis || undefined)}
+            >
+              Create Project
             </Button>
           )}
         </div>
