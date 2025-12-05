@@ -9,7 +9,17 @@ import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Trash2, Maximize2, Brain, Leaf, Mountain, Wrench, DollarSign, AlertTriangle, Users } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Loader2, Save, Trash2, Maximize2, Brain, Leaf, Mountain, Wrench, DollarSign, AlertTriangle, Users, Layers } from "lucide-react";
+
+const MAP_STYLES = {
+  satellite: { id: "mapbox://styles/mapbox/satellite-streets-v12", label: "Satellite" },
+  streets: { id: "mapbox://styles/mapbox/streets-v12", label: "Streets" },
+  terrain: { id: "mapbox://styles/mapbox/outdoors-v12", label: "Terrain" },
+  light: { id: "mapbox://styles/mapbox/light-v11", label: "Light" },
+} as const;
+
+type MapStyleKey = keyof typeof MAP_STYLES;
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -70,6 +80,13 @@ export default function MapDrawing({
   const [currentPolygon, setCurrentPolygon] = useState<GeoJSON.Polygon | null>(null);
   const [analysis, setAnalysis] = useState<LandAnalysis | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [mapStyle, setMapStyle] = useState<MapStyleKey>("satellite");
+
+  const handleStyleChange = useCallback((style: MapStyleKey) => {
+    if (!map.current || !style) return;
+    setMapStyle(style);
+    map.current.setStyle(MAP_STYLES[style].id);
+  }, []);
 
   const calculateArea = useCallback((polygon: GeoJSON.Polygon) => {
     const area = turf.area(polygon);
@@ -354,6 +371,22 @@ export default function MapDrawing({
   return (
     <div className="relative w-full h-full min-h-[400px]">
       <div ref={mapContainer} className={`absolute inset-0 rounded-lg ${showAnalysis ? 'w-[60%]' : 'w-full'} transition-all duration-300`} />
+      
+      {/* Layer Toggle */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg border p-1" style={{ left: showAnalysis ? '30%' : '50%' }}>
+        <ToggleGroup type="single" value={mapStyle} onValueChange={(v) => v && handleStyleChange(v as MapStyleKey)} className="gap-1">
+          {Object.entries(MAP_STYLES).map(([key, { label }]) => (
+            <ToggleGroupItem 
+              key={key} 
+              value={key} 
+              size="sm"
+              className="text-xs px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              {label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </div>
       
       {/* Analysis Panel */}
       {showAnalysis && analysis && (
