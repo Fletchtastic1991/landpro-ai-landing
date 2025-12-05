@@ -7,9 +7,43 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
 import { Button } from "@/components/ui/button";
-import { Loader2, Save, Trash2, Maximize2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Save, Trash2, Maximize2, Brain, Leaf, Mountain, Wrench, DollarSign, AlertTriangle, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiZmxldGNodGFzdGljMTk5MSIsImEiOiJjbWlxNnNjajUwamI2M2VvdmFmbGQ5NTlsIn0.hIurrjB3WXifVT10VgKXRA";
+
+interface LandAnalysis {
+  vegetation: {
+    type: string;
+    density: string;
+    recommendations: string[];
+  };
+  terrain: {
+    type: string;
+    slope_estimate: string;
+    drainage: string;
+    recommendations: string[];
+  };
+  equipment: {
+    recommended: string[];
+    considerations: string[];
+  };
+  labor: {
+    estimated_crew_size: number;
+    estimated_hours: number;
+    difficulty: string;
+  };
+  hazards: string[];
+  cost_factors: {
+    base_rate_per_acre: number;
+    estimated_total: number;
+    factors_affecting_cost: string[];
+  };
+  summary: string;
+}
 
 interface MapDrawingProps {
   initialBoundary?: GeoJSON.Polygon | null;
@@ -29,12 +63,15 @@ export default function MapDrawing({
   const draw = useRef<MapboxDraw | null>(null);
   const [acreage, setAcreage] = useState<number | null>(initialAcreage ?? null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [currentPolygon, setCurrentPolygon] = useState<GeoJSON.Polygon | null>(null);
+  const [analysis, setAnalysis] = useState<LandAnalysis | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   const calculateArea = useCallback((polygon: GeoJSON.Polygon) => {
     const area = turf.area(polygon);
-    const acres = area * 0.000247105; // Convert sq meters to acres
+    const acres = area * 0.000247105;
     return Math.round(acres * 100) / 100;
   }, []);
 
@@ -48,6 +85,8 @@ export default function MapDrawing({
       setAcreage(acres);
       setCurrentPolygon(polygon);
       setHasChanges(true);
+      setAnalysis(null);
+      setShowAnalysis(false);
     } else {
       setAcreage(null);
       setCurrentPolygon(null);
@@ -62,7 +101,7 @@ export default function MapDrawing({
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/satellite-streets-v12",
-      center: [-98.5795, 39.8283], // Center of USA
+      center: [-98.5795, 39.8283],
       zoom: 4,
       pitch: 0,
     });
@@ -78,7 +117,6 @@ export default function MapDrawing({
       "top-right"
     );
 
-    // Add geocoder search control
     const geocoder = new MapboxGeocoder({
       accessToken: MAPBOX_TOKEN,
       marker: true,
@@ -155,12 +193,13 @@ export default function MapDrawing({
         setAcreage(null);
         setCurrentPolygon(null);
         setHasChanges(false);
+        setAnalysis(null);
+        setShowAnalysis(false);
       });
     }
 
     map.current.on("load", () => {
       if (initialBoundary && map.current) {
-        // Add the boundary as a source and layer for display
         if (readOnly) {
           map.current.addSource("boundary", {
             type: "geojson",
@@ -191,7 +230,6 @@ export default function MapDrawing({
             },
           });
         } else if (draw.current) {
-          // Add to draw control for editing
           draw.current.add({
             type: "Feature",
             properties: {},
@@ -199,7 +237,6 @@ export default function MapDrawing({
           });
         }
 
-        // Fit bounds to the polygon
         const bounds = turf.bbox(initialBoundary);
         map.current.fitBounds(
           [
@@ -233,12 +270,48 @@ export default function MapDrawing({
     }
   };
 
+  const handleAnalyze = async () => {
+    if (!currentPolygon || !acreage) {
+      toast.error("Please draw a boundary first");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-land', {
+        body: { 
+          boundary: currentPolygon, 
+          acreage 
+        }
+      });
+
+      if (error) {
+        console.error('Analysis error:', error);
+        toast.error(error.message || "Failed to analyze land");
+        return;
+      }
+
+      if (data?.analysis) {
+        setAnalysis(data.analysis);
+        setShowAnalysis(true);
+        toast.success("Land analysis complete!");
+      }
+    } catch (err) {
+      console.error('Analysis error:', err);
+      toast.error("Failed to analyze land");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleClear = () => {
     if (draw.current) {
       draw.current.deleteAll();
       setAcreage(null);
       setCurrentPolygon(null);
       setHasChanges(false);
+      setAnalysis(null);
+      setShowAnalysis(false);
     }
   };
 
@@ -258,12 +331,194 @@ export default function MapDrawing({
     }
   };
 
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty.toLowerCase()) {
+      case 'easy': return 'bg-green-500/20 text-green-700';
+      case 'moderate': return 'bg-yellow-500/20 text-yellow-700';
+      case 'challenging': return 'bg-red-500/20 text-red-700';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getDensityColor = (density: string) => {
+    switch (density.toLowerCase()) {
+      case 'low': return 'bg-green-500/20 text-green-700';
+      case 'medium': return 'bg-yellow-500/20 text-yellow-700';
+      case 'high': return 'bg-red-500/20 text-red-700';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
   return (
     <div className="relative w-full h-full min-h-[400px]">
-      <div ref={mapContainer} className="absolute inset-0 rounded-lg" />
+      <div ref={mapContainer} className={`absolute inset-0 rounded-lg ${showAnalysis ? 'w-[60%]' : 'w-full'} transition-all duration-300`} />
+      
+      {/* Analysis Panel */}
+      {showAnalysis && analysis && (
+        <div className="absolute right-0 top-0 bottom-0 w-[40%] overflow-y-auto bg-background border-l p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              AI Land Analysis
+            </h3>
+            <Button variant="ghost" size="sm" onClick={() => setShowAnalysis(false)}>
+              ✕
+            </Button>
+          </div>
+
+          <p className="text-sm text-muted-foreground">{analysis.summary}</p>
+
+          {/* Vegetation */}
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Leaf className="h-4 w-4 text-green-600" />
+                Vegetation
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{analysis.vegetation.type}</span>
+                <Badge className={getDensityColor(analysis.vegetation.density)}>
+                  {analysis.vegetation.density} density
+                </Badge>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                {analysis.vegetation.recommendations.map((rec, i) => (
+                  <li key={i}>• {rec}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Terrain */}
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Mountain className="h-4 w-4 text-amber-600" />
+                Terrain
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium">{analysis.terrain.type}</span>
+                <Badge variant="outline">{analysis.terrain.slope_estimate} slope</Badge>
+                <Badge variant="outline">{analysis.terrain.drainage} drainage</Badge>
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                {analysis.terrain.recommendations.map((rec, i) => (
+                  <li key={i}>• {rec}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Equipment */}
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Wrench className="h-4 w-4 text-blue-600" />
+                Equipment
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 space-y-2">
+              <div className="flex flex-wrap gap-1">
+                {analysis.equipment.recommended.map((eq, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">{eq}</Badge>
+                ))}
+              </div>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                {analysis.equipment.considerations.map((con, i) => (
+                  <li key={i}>• {con}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Labor */}
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Users className="h-4 w-4 text-purple-600" />
+                Labor Estimate
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-2">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div className="text-xl font-bold">{analysis.labor.estimated_crew_size}</div>
+                  <div className="text-xs text-muted-foreground">Crew Size</div>
+                </div>
+                <div>
+                  <div className="text-xl font-bold">{analysis.labor.estimated_hours}</div>
+                  <div className="text-xs text-muted-foreground">Hours</div>
+                </div>
+                <div>
+                  <Badge className={getDifficultyColor(analysis.labor.difficulty)}>
+                    {analysis.labor.difficulty}
+                  </Badge>
+                  <div className="text-xs text-muted-foreground mt-1">Difficulty</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Cost Estimate */}
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-green-600" />
+                Cost Estimate
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Base rate/acre:</span>
+                <span className="font-medium">${analysis.cost_factors.base_rate_per_acre}</span>
+              </div>
+              <div className="flex items-center justify-between border-t pt-2">
+                <span className="font-medium">Estimated Total:</span>
+                <span className="text-lg font-bold text-primary">
+                  ${analysis.cost_factors.estimated_total.toLocaleString()}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <span className="font-medium">Cost factors:</span>
+                <ul className="mt-1 space-y-0.5">
+                  {analysis.cost_factors.factors_affecting_cost.map((factor, i) => (
+                    <li key={i}>• {factor}</li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Hazards */}
+          {analysis.hazards.length > 0 && (
+            <Card className="border-destructive/50">
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  Potential Hazards
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="py-2">
+                <ul className="text-xs space-y-1">
+                  {analysis.hazards.map((hazard, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-destructive">⚠</span>
+                      {hazard}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
       
       {/* Info Panel */}
-      <div className="absolute top-4 right-16 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
+      <div className="absolute top-4 right-16 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border" style={{ right: showAnalysis ? 'calc(40% + 4rem)' : '4rem' }}>
         <div className="text-sm font-medium text-muted-foreground mb-1">
           Property Area
         </div>
@@ -298,6 +553,20 @@ export default function MapDrawing({
             <Trash2 className="h-4 w-4 mr-1" />
             Clear
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAnalyze}
+            disabled={!currentPolygon || isAnalyzing}
+            className="bg-primary/10 hover:bg-primary/20 border-primary/30"
+          >
+            {isAnalyzing ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Brain className="h-4 w-4 mr-1" />
+            )}
+            AI Analysis
+          </Button>
           {onSave && (
             <Button
               size="sm"
@@ -312,6 +581,16 @@ export default function MapDrawing({
               Save Boundary
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Show Analysis Button when collapsed */}
+      {analysis && !showAnalysis && (
+        <div className="absolute bottom-4 right-4">
+          <Button size="sm" onClick={() => setShowAnalysis(true)}>
+            <Brain className="h-4 w-4 mr-1" />
+            View Analysis
+          </Button>
         </div>
       )}
 
