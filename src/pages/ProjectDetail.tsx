@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Loader2, MapPin, FileText, AlertTriangle, Map, Leaf, Mountain, Wrench, DollarSign, Users, Brain } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, FileText, AlertTriangle, Map, Leaf, Mountain, Wrench, DollarSign, Users, Brain, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import MapDrawing from "@/components/MapDrawing";
 import type { Json } from "@/integrations/supabase/types";
@@ -317,6 +317,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<Project | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -362,6 +363,91 @@ export default function ProjectDetail() {
 
     fetchData();
   }, [id, navigate, toast]);
+
+  const runAnalysis = async () => {
+    if (!project?.boundary || !project?.acreage) {
+      toast({
+        title: "Cannot run analysis",
+        description: "Please define property boundaries first on the Map tab",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-land`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            boundary: project.boundary,
+            acreage: project.acreage,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Analysis failed");
+      }
+
+      const data = await response.json();
+
+      // Save or update analysis in database
+      if (analysis) {
+        // Update existing analysis
+        const { error } = await supabase
+          .from("analysis")
+          .update({ land_classification: data.analysis as unknown as Json })
+          .eq("id", analysis.id);
+
+        if (error) throw error;
+
+        setAnalysis({
+          ...analysis,
+          land_classification: data.analysis,
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        // Create new analysis
+        const { data: newAnalysis, error } = await supabase
+          .from("analysis")
+          .insert({
+            project_id: project.id,
+            land_classification: data.analysis as unknown as Json,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setAnalysis({
+          id: newAnalysis.id,
+          land_classification: data.analysis,
+          hazards: null,
+          path: null,
+          created_at: newAnalysis.created_at,
+        });
+      }
+
+      toast({ title: "Analysis complete!" });
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast({
+        title: "Analysis failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -515,7 +601,32 @@ export default function ProjectDetail() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="analysis" className="mt-6">
+        <TabsContent value="analysis" className="mt-6 space-y-6">
+          {/* Analysis Action Button */}
+          <div className="flex justify-end">
+            <Button
+              onClick={runAnalysis}
+              disabled={isAnalyzing || !project?.boundary}
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : analysis?.land_classification ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Analysis
+                </>
+              ) : (
+                <>
+                  <Brain className="h-4 w-4 mr-2" />
+                  Run AI Analysis
+                </>
+              )}
+            </Button>
+          </div>
+
           {analysis?.land_classification ? (
             <AnalysisDisplay analysis={analysis.land_classification} createdAt={analysis.created_at} />
           ) : (
@@ -531,13 +642,27 @@ export default function ProjectDetail() {
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
-                  <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    No analysis available yet
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Define property boundaries first, then run AI analysis from the Map tab
-                  </p>
+                  {!project?.boundary ? (
+                    <>
+                      <Map className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        No boundaries defined
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Go to the Map tab and draw property boundaries first
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        Ready for analysis
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Click "Run AI Analysis" above to generate insights
+                      </p>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
