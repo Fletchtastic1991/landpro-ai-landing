@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, Loader2, MapPin, FileText, AlertTriangle, Map, Leaf, Mountain, Wrench, DollarSign, Users, Brain, RefreshCw } from "lucide-react";
@@ -305,6 +306,157 @@ function AnalysisDisplay({ analysis, createdAt }: { analysis: LandAnalysis; crea
             </CardContent>
           </Card>
         )}
+      </div>
+    </div>
+  );
+}
+
+function AnalysisSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Summary Header Skeleton */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-6 w-40" />
+          </div>
+          <Skeleton className="h-4 w-60 mt-2" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4 mt-2" />
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Vegetation Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-4/5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Terrain Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-5 w-20" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Equipment Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-5 w-44" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-4/5" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Labor Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-5 w-32" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <Skeleton className="h-8 w-8 mx-auto" />
+                <Skeleton className="h-3 w-16 mx-auto mt-2" />
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <Skeleton className="h-8 w-8 mx-auto" />
+                <Skeleton className="h-3 w-12 mx-auto mt-2" />
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <Skeleton className="h-6 w-16 mx-auto rounded-full" />
+                <Skeleton className="h-3 w-14 mx-auto mt-2" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cost Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-5 w-28" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between py-2 border-b">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-5 w-16" />
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Hazards Skeleton */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-5 w-36" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Skeleton className="h-12 w-full rounded-lg" />
+              <Skeleton className="h-12 w-full rounded-lg" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -627,7 +779,9 @@ export default function ProjectDetail() {
             </Button>
           </div>
 
-          {analysis?.land_classification ? (
+          {isAnalyzing ? (
+            <AnalysisSkeleton />
+          ) : analysis?.land_classification ? (
             <AnalysisDisplay analysis={analysis.land_classification} createdAt={analysis.created_at} />
           ) : (
             <Card>

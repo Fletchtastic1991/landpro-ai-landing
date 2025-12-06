@@ -685,9 +685,18 @@ export default function MapDrawing({
         )}
       </div>
 
-      {/* Measurement Tools */}
+      {/* Measurement Tools - positioned top-right below navigation controls */}
       {!readOnly && (
-        <div className="absolute top-20 right-4 bg-background/95 backdrop-blur-sm rounded-lg shadow-lg border p-2 space-y-1" style={{ right: showAnalysis ? 'calc(40% + 1rem)' : '1rem' }}>
+        <div 
+          className="absolute bg-background/95 backdrop-blur-sm rounded-lg shadow-lg border p-2 space-y-1 z-10" 
+          style={{ 
+            top: '10rem', 
+            right: showAnalysis ? 'calc(40% + 1rem)' : '1rem' 
+          }}
+        >
+          <div className="text-xs font-medium text-muted-foreground px-2 pb-1 border-b mb-1">
+            Measure
+          </div>
           <Button
             variant={measureMode === 'distance' ? 'default' : 'ghost'}
             size="sm"
