@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Loader2, MapPin, FileText, AlertTriangle, Map } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, FileText, AlertTriangle, Map, Leaf, Mountain, Wrench, DollarSign, Users, Brain } from "lucide-react";
 import { format } from "date-fns";
 import MapDrawing from "@/components/MapDrawing";
 import type { Json } from "@/integrations/supabase/types";
@@ -21,12 +21,252 @@ interface Project {
   updated_at: string;
 }
 
+interface LandAnalysis {
+  vegetation: {
+    type: string;
+    density: string;
+    recommendations: string[];
+  };
+  terrain: {
+    type: string;
+    slope_estimate: string;
+    drainage: string;
+    recommendations: string[];
+  };
+  equipment: {
+    recommended: string[];
+    considerations: string[];
+  };
+  labor: {
+    estimated_crew_size: number;
+    estimated_hours: number;
+    difficulty: string;
+  };
+  hazards: string[];
+  cost_factors: {
+    base_rate_per_acre: number;
+    estimated_total: number;
+    factors_affecting_cost: string[];
+  };
+  summary: string;
+}
+
 interface Analysis {
   id: string;
-  land_classification: any;
+  land_classification: LandAnalysis | null;
   hazards: any;
   path: any;
   created_at: string;
+}
+
+function getDifficultyColor(difficulty: string) {
+  switch (difficulty?.toLowerCase()) {
+    case 'easy': return 'bg-green-500/20 text-green-700 border-green-500/30';
+    case 'moderate': return 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30';
+    case 'challenging': return 'bg-red-500/20 text-red-700 border-red-500/30';
+    default: return 'bg-muted text-muted-foreground';
+  }
+}
+
+function getDensityColor(density: string) {
+  switch (density?.toLowerCase()) {
+    case 'low': return 'bg-green-500/20 text-green-700 border-green-500/30';
+    case 'medium': return 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30';
+    case 'high': return 'bg-red-500/20 text-red-700 border-red-500/30';
+    default: return 'bg-muted text-muted-foreground';
+  }
+}
+
+function AnalysisDisplay({ analysis, createdAt }: { analysis: LandAnalysis; createdAt: string }) {
+  return (
+    <div className="space-y-6">
+      {/* Summary Header */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            AI Land Analysis
+          </CardTitle>
+          <CardDescription>
+            Generated on {format(new Date(createdAt), "MMMM d, yyyy 'at' h:mm a")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">{analysis.summary}</p>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Vegetation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Leaf className="h-5 w-5 text-green-600" />
+              Vegetation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium">{analysis.vegetation.type}</span>
+              <Badge className={getDensityColor(analysis.vegetation.density)}>
+                {analysis.vegetation.density} density
+              </Badge>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">Recommendations</h4>
+              <ul className="text-sm space-y-1">
+                {analysis.vegetation.recommendations.map((rec, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Terrain */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Mountain className="h-5 w-5 text-amber-600" />
+              Terrain
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium">{analysis.terrain.type}</span>
+              <Badge variant="outline">{analysis.terrain.slope_estimate} slope</Badge>
+              <Badge variant="outline">{analysis.terrain.drainage} drainage</Badge>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">Recommendations</h4>
+              <ul className="text-sm space-y-1">
+                {analysis.terrain.recommendations.map((rec, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Equipment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-blue-600" />
+              Recommended Equipment
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {analysis.equipment.recommended.map((eq, i) => (
+                <Badge key={i} variant="secondary">{eq}</Badge>
+              ))}
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">Considerations</h4>
+              <ul className="text-sm space-y-1">
+                {analysis.equipment.considerations.map((con, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    {con}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Labor Estimate */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-600" />
+              Labor Estimate
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="text-3xl font-bold text-primary">{analysis.labor.estimated_crew_size}</div>
+                <div className="text-sm text-muted-foreground">Crew Size</div>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="text-3xl font-bold text-primary">{analysis.labor.estimated_hours}</div>
+                <div className="text-sm text-muted-foreground">Hours</div>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <Badge className={`${getDifficultyColor(analysis.labor.difficulty)} text-sm`}>
+                  {analysis.labor.difficulty}
+                </Badge>
+                <div className="text-sm text-muted-foreground mt-1">Difficulty</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cost Estimate */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-600" />
+              Cost Estimate
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between py-2 border-b">
+              <span className="text-muted-foreground">Base rate per acre</span>
+              <span className="font-medium">${analysis.cost_factors.base_rate_per_acre}</span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="font-semibold">Estimated Total</span>
+              <span className="text-2xl font-bold text-primary">
+                ${analysis.cost_factors.estimated_total.toLocaleString()}
+              </span>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">Factors Affecting Cost</h4>
+              <ul className="text-sm space-y-1">
+                {analysis.cost_factors.factors_affecting_cost.map((factor, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-muted-foreground">•</span>
+                    {factor}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Hazards */}
+        {analysis.hazards && analysis.hazards.length > 0 && (
+          <Card className="border-destructive/30 md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Potential Hazards
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {analysis.hazards.map((hazard, i) => (
+                  <div key={i} className="flex items-start gap-2 bg-destructive/5 p-3 rounded-lg">
+                    <span className="text-destructive">⚠</span>
+                    <span className="text-sm">{hazard}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function ProjectDetail() {
@@ -67,7 +307,13 @@ export default function ProjectDetail() {
         .maybeSingle();
 
       if (analysisData) {
-        setAnalysis(analysisData);
+        setAnalysis({
+          id: analysisData.id,
+          land_classification: analysisData.land_classification as unknown as LandAnalysis | null,
+          hazards: analysisData.hazards,
+          path: analysisData.path,
+          created_at: analysisData.created_at
+        });
       }
 
       setIsLoading(false);
@@ -229,49 +475,32 @@ export default function ProjectDetail() {
         </TabsContent>
 
         <TabsContent value="analysis" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                Land Analysis
-              </CardTitle>
-              <CardDescription>
-                AI-powered analysis of your property
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {analysis ? (
-                <div className="space-y-4">
-                  {analysis.land_classification && (
-                    <div>
-                      <h4 className="font-semibold mb-2">Land Classification</h4>
-                      <pre className="bg-muted p-4 rounded-lg text-sm overflow-auto">
-                        {JSON.stringify(analysis.land_classification, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-                  {analysis.hazards && (
-                    <div>
-                      <h4 className="font-semibold mb-2">Hazards Identified</h4>
-                      <pre className="bg-muted p-4 rounded-lg text-sm overflow-auto">
-                        {JSON.stringify(analysis.hazards, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              ) : (
+          {analysis?.land_classification ? (
+            <AnalysisDisplay analysis={analysis.land_classification} createdAt={analysis.created_at} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  Land Analysis
+                </CardTitle>
+                <CardDescription>
+                  AI-powered analysis of your property
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="text-center py-8">
                   <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                   <p className="text-muted-foreground mb-4">
                     No analysis available yet
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Define property boundaries first, then run AI analysis
+                    Define property boundaries first, then run AI analysis from the Map tab
                   </p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="reports" className="mt-6">
