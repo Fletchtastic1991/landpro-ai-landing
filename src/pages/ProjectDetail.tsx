@@ -78,6 +78,13 @@ function getDensityColor(density: string) {
 }
 
 function AnalysisDisplay({ analysis, createdAt }: { analysis: LandAnalysis; createdAt: string }) {
+  const vegetation = analysis?.vegetation;
+  const terrain = analysis?.terrain;
+  const equipment = analysis?.equipment;
+  const labor = analysis?.labor;
+  const costFactors = analysis?.cost_factors;
+  const hazards = analysis?.hazards;
+
   return (
     <div className="space-y-6">
       {/* Summary Header */}
@@ -92,159 +99,193 @@ function AnalysisDisplay({ analysis, createdAt }: { analysis: LandAnalysis; crea
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">{analysis.summary}</p>
+          <p className="text-muted-foreground">{analysis?.summary || "No summary available"}</p>
         </CardContent>
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Vegetation */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Leaf className="h-5 w-5 text-green-600" />
-              Vegetation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium">{analysis.vegetation.type}</span>
-              <Badge className={getDensityColor(analysis.vegetation.density)}>
-                {analysis.vegetation.density} density
-              </Badge>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Recommendations</h4>
-              <ul className="text-sm space-y-1">
-                {analysis.vegetation.recommendations.map((rec, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
-                    {rec}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+        {vegetation && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Leaf className="h-5 w-5 text-green-600" />
+                Vegetation
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium">{vegetation.type || "Unknown"}</span>
+                {vegetation.density && (
+                  <Badge className={getDensityColor(vegetation.density)}>
+                    {vegetation.density} density
+                  </Badge>
+                )}
+              </div>
+              {vegetation.recommendations && vegetation.recommendations.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Recommendations</h4>
+                  <ul className="text-sm space-y-1">
+                    {vegetation.recommendations.map((rec, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-primary">•</span>
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Terrain */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Mountain className="h-5 w-5 text-amber-600" />
-              Terrain
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium">{analysis.terrain.type}</span>
-              <Badge variant="outline">{analysis.terrain.slope_estimate} slope</Badge>
-              <Badge variant="outline">{analysis.terrain.drainage} drainage</Badge>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Recommendations</h4>
-              <ul className="text-sm space-y-1">
-                {analysis.terrain.recommendations.map((rec, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
-                    {rec}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+        {terrain && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Mountain className="h-5 w-5 text-amber-600" />
+                Terrain
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium">{terrain.type || "Unknown"}</span>
+                {terrain.slope_estimate && (
+                  <Badge variant="outline">{terrain.slope_estimate} slope</Badge>
+                )}
+                {terrain.drainage && (
+                  <Badge variant="outline">{terrain.drainage} drainage</Badge>
+                )}
+              </div>
+              {terrain.recommendations && terrain.recommendations.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Recommendations</h4>
+                  <ul className="text-sm space-y-1">
+                    {terrain.recommendations.map((rec, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-primary">•</span>
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Equipment */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Wrench className="h-5 w-5 text-blue-600" />
-              Recommended Equipment
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {analysis.equipment.recommended.map((eq, i) => (
-                <Badge key={i} variant="secondary">{eq}</Badge>
-              ))}
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Considerations</h4>
-              <ul className="text-sm space-y-1">
-                {analysis.equipment.considerations.map((con, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
-                    {con}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+        {equipment && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-blue-600" />
+                Recommended Equipment
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {equipment.recommended && equipment.recommended.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {equipment.recommended.map((eq, i) => (
+                    <Badge key={i} variant="secondary">{eq}</Badge>
+                  ))}
+                </div>
+              )}
+              {equipment.considerations && equipment.considerations.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Considerations</h4>
+                  <ul className="text-sm space-y-1">
+                    {equipment.considerations.map((con, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-primary">•</span>
+                        {con}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Labor Estimate */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-600" />
-              Labor Estimate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="bg-muted/50 rounded-lg p-4">
-                <div className="text-3xl font-bold text-primary">{analysis.labor.estimated_crew_size}</div>
-                <div className="text-sm text-muted-foreground">Crew Size</div>
+        {labor && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-600" />
+                Labor Estimate
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="text-3xl font-bold text-primary">{labor.estimated_crew_size ?? "-"}</div>
+                  <div className="text-sm text-muted-foreground">Crew Size</div>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="text-3xl font-bold text-primary">{labor.estimated_hours ?? "-"}</div>
+                  <div className="text-sm text-muted-foreground">Hours</div>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-4">
+                  {labor.difficulty ? (
+                    <Badge className={`${getDifficultyColor(labor.difficulty)} text-sm`}>
+                      {labor.difficulty}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                  <div className="text-sm text-muted-foreground mt-1">Difficulty</div>
+                </div>
               </div>
-              <div className="bg-muted/50 rounded-lg p-4">
-                <div className="text-3xl font-bold text-primary">{analysis.labor.estimated_hours}</div>
-                <div className="text-sm text-muted-foreground">Hours</div>
-              </div>
-              <div className="bg-muted/50 rounded-lg p-4">
-                <Badge className={`${getDifficultyColor(analysis.labor.difficulty)} text-sm`}>
-                  {analysis.labor.difficulty}
-                </Badge>
-                <div className="text-sm text-muted-foreground mt-1">Difficulty</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Cost Estimate */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-green-600" />
-              Cost Estimate
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Base rate per acre</span>
-              <span className="font-medium">${analysis.cost_factors.base_rate_per_acre}</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="font-semibold">Estimated Total</span>
-              <span className="text-2xl font-bold text-primary">
-                ${analysis.cost_factors.estimated_total.toLocaleString()}
-              </span>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Factors Affecting Cost</h4>
-              <ul className="text-sm space-y-1">
-                {analysis.cost_factors.factors_affecting_cost.map((factor, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-muted-foreground">•</span>
-                    {factor}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+        {costFactors && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                Cost Estimate
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {costFactors.base_rate_per_acre != null && (
+                <div className="flex items-center justify-between py-2 border-b">
+                  <span className="text-muted-foreground">Base rate per acre</span>
+                  <span className="font-medium">${costFactors.base_rate_per_acre}</span>
+                </div>
+              )}
+              {costFactors.estimated_total != null && (
+                <div className="flex items-center justify-between py-2">
+                  <span className="font-semibold">Estimated Total</span>
+                  <span className="text-2xl font-bold text-primary">
+                    ${costFactors.estimated_total.toLocaleString()}
+                  </span>
+                </div>
+              )}
+              {costFactors.factors_affecting_cost && costFactors.factors_affecting_cost.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Factors Affecting Cost</h4>
+                  <ul className="text-sm space-y-1">
+                    {costFactors.factors_affecting_cost.map((factor, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-muted-foreground">•</span>
+                        {factor}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Hazards */}
-        {analysis.hazards && analysis.hazards.length > 0 && (
+        {hazards && hazards.length > 0 && (
           <Card className="border-destructive/30 md:col-span-2">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2 text-destructive">
@@ -254,7 +295,7 @@ function AnalysisDisplay({ analysis, createdAt }: { analysis: LandAnalysis; crea
             </CardHeader>
             <CardContent>
               <div className="grid gap-2 sm:grid-cols-2">
-                {analysis.hazards.map((hazard, i) => (
+                {hazards.map((hazard, i) => (
                   <div key={i} className="flex items-start gap-2 bg-destructive/5 p-3 rounded-lg">
                     <span className="text-destructive">⚠</span>
                     <span className="text-sm">{hazard}</span>
