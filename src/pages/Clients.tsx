@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -10,54 +11,229 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Search, Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Search, Eye, Plus, Loader2, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
-const clients = [
-  {
-    id: 1,
-    name: "Green Acres Property",
-    email: "contact@greenacres.com",
-    phone: "(555) 123-4567",
-    totalJobs: 8,
-  },
-  {
-    id: 2,
-    name: "Mountain View Ranch",
-    email: "info@mountainview.com",
-    phone: "(555) 234-5678",
-    totalJobs: 5,
-  },
-  {
-    id: 3,
-    name: "Riverside Estate",
-    email: "admin@riverside.com",
-    phone: "(555) 345-6789",
-    totalJobs: 12,
-  },
-  {
-    id: 4,
-    name: "Oak Hills Development",
-    email: "contact@oakhills.com",
-    phone: "(555) 456-7890",
-    totalJobs: 3,
-  },
-];
+interface Client {
+  id: string;
+  client_name: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  status: string;
+  created_at: string;
+}
 
 export default function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddingClient, setIsAddingClient] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Form state
+  const [clientName, setClientName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      fetchClients();
+    }
+  }, [user]);
+
+  const fetchClients = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('landscaper_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load clients",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddClient = async () => {
+    if (!clientName || !email) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in client name and email",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to add clients",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingClient(true);
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert({
+          client_name: clientName,
+          email,
+          phone: phone || null,
+          address: address || null,
+          landscaper_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setClients([data, ...clients]);
+      toast({
+        title: "Client Added",
+        description: `${clientName} has been added to your clients.`,
+      });
+
+      // Reset form
+      setClientName("");
+      setEmail("");
+      setPhone("");
+      setAddress("");
+      setDialogOpen(false);
+    } catch (error) {
+      console.error('Error adding client:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add client. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingClient(false);
+    }
+  };
 
   const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleViewDetails = (client: Client) => {
+    setSelectedClient(client);
+    setDetailsOpen(true);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold">Clients</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your client relationships
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Clients</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your client relationships
+          </p>
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Client
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Client</DialogTitle>
+              <DialogDescription>
+                Enter the details for your new client.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="clientName">Client Name *</Label>
+                <Input
+                  id="clientName"
+                  placeholder="Enter client name"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  disabled={isAddingClient}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="client@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isAddingClient}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(555) 123-4567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={isAddingClient}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  placeholder="123 Main St, City, State"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  disabled={isAddingClient}
+                />
+              </div>
+              <Button
+                onClick={handleAddClient}
+                className="w-full"
+                disabled={isAddingClient}
+              >
+                {isAddingClient ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Client"
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -74,39 +250,101 @@ export default function Clients() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Total Jobs</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell>{client.email}</TableCell>
-                  <TableCell>{client.phone}</TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary">
-                      {client.totalJobs}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="gap-2">
-                      <Eye className="h-4 w-4" />
-                      View Profile
-                    </Button>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredClients.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No clients found</p>
+              <p className="text-sm mt-1">Add your first client to get started</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredClients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell className="font-medium">{client.client_name}</TableCell>
+                    <TableCell>{client.email}</TableCell>
+                    <TableCell>{client.phone || "—"}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-medium ${
+                        client.status === 'active' 
+                          ? 'bg-green-500/10 text-green-700 border border-green-500/20'
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {client.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => handleViewDetails(client)}
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
+
+      {/* Client Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Client Details</DialogTitle>
+          </DialogHeader>
+          {selectedClient && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground text-sm">Name</Label>
+                  <p className="font-medium">{selectedClient.client_name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Status</Label>
+                  <p className="font-medium capitalize">{selectedClient.status}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Email</Label>
+                  <p className="font-medium">{selectedClient.email}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-sm">Phone</Label>
+                  <p className="font-medium">{selectedClient.phone || "Not provided"}</p>
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-muted-foreground text-sm">Address</Label>
+                  <p className="font-medium">{selectedClient.address || "Not provided"}</p>
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-muted-foreground text-sm">Added On</Label>
+                  <p className="font-medium">
+                    {new Date(selectedClient.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
