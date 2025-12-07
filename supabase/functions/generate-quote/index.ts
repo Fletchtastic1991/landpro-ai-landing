@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -7,7 +6,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -17,12 +15,11 @@ serve(async (req) => {
     
     console.log('Generating quote for:', { clientName, jobDescription, propertySize, propertyUnit });
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Construct a detailed prompt for OpenAI to analyze the job
     const prompt = `You are an expert landscaping and land management estimator. Analyze the following job request and provide a detailed cost breakdown:
 
 Client: ${clientName}
@@ -40,24 +37,16 @@ Consider factors like:
 - Property size and terrain complexity
 - Type of work (clearing, grading, mulching, maintenance, etc.)
 - Equipment and labor requirements
-- Material costs specific to the job type
+- Material costs specific to the job type`;
 
-Respond ONLY with a valid JSON object in this exact format:
-{
-  "jobTitle": "Brief descriptive title",
-  "laborCost": number,
-  "materialCost": number,
-  "completionTime": number
-}`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-04-14',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { 
             role: 'system', 
@@ -66,33 +55,64 @@ Respond ONLY with a valid JSON object in this exact format:
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_completion_tokens: 500,
+        max_tokens: 500,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "generate_quote",
+              description: "Generate a landscaping quote with cost breakdown",
+              parameters: {
+                type: "object",
+                properties: {
+                  jobTitle: { type: "string", description: "Brief descriptive title for the job" },
+                  laborCost: { type: "number", description: "Estimated labor cost in USD" },
+                  materialCost: { type: "number", description: "Estimated material cost in USD" },
+                  completionTime: { type: "number", description: "Estimated completion time in days" }
+                },
+                required: ["jobTitle", "laborCost", "materialCost", "completionTime"]
+              }
+            }
+          }
+        ],
+        tool_choice: { type: "function", function: { name: "generate_quote" } }
       }),
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Payment required, please add funds to your workspace." }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('AI gateway error:', response.status, errorText);
+      throw new Error(`AI gateway error: ${response.status}`);
     }
 
     const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-    
-    console.log('AI Response:', aiResponse);
+    console.log('AI Response:', JSON.stringify(data));
 
-    // Parse the JSON response
     let quoteData;
-    try {
-      // Remove markdown code blocks if present
+    
+    // Check for tool call response
+    if (data.choices[0]?.message?.tool_calls?.[0]) {
+      const toolCall = data.choices[0].message.tool_calls[0];
+      quoteData = JSON.parse(toolCall.function.arguments);
+    } else {
+      // Fallback to parsing content
+      const aiResponse = data.choices[0].message.content;
       const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
       quoteData = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', aiResponse);
-      throw new Error('Failed to parse AI response as JSON');
     }
 
-    // Calculate total and add metadata
     const totalEstimate = quoteData.laborCost + quoteData.materialCost;
     
     const result = {
