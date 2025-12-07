@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.analyze-land]
 verify_jwt = false
+
+[functions.preprocess-parcel]
+verify_jwt = false
