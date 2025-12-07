@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Loader2, MapPin, FileText, AlertTriangle, Map, Leaf, Mountain, Wrench, DollarSign, Users, Brain, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, FileText, AlertTriangle, Map, Leaf, Mountain, Wrench, DollarSign, Users, Brain, RefreshCw, Cog } from "lucide-react";
 import { format } from "date-fns";
 import MapDrawing from "@/components/MapDrawing";
 import type { Json } from "@/integrations/supabase/types";
@@ -470,6 +470,7 @@ export default function ProjectDetail() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isPreprocessing, setIsPreprocessing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -598,6 +599,70 @@ export default function ProjectDetail() {
       });
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const runPreprocess = async () => {
+    if (!project?.boundary) {
+      toast({
+        title: "Cannot run preprocessing",
+        description: "Please define property boundaries first on the Map tab",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPreprocessing(true);
+
+    try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("You must be logged in to run preprocessing");
+      }
+
+      // Calculate center point from boundary
+      const coordinates = project.boundary?.coordinates?.[0];
+      let lat = 0, lng = 0;
+      if (coordinates && coordinates.length > 0) {
+        const sum = coordinates.reduce((acc: { lat: number; lng: number }, coord: number[]) => ({
+          lat: acc.lat + coord[1],
+          lng: acc.lng + coord[0]
+        }), { lat: 0, lng: 0 });
+        lat = sum.lat / coordinates.length;
+        lng = sum.lng / coordinates.length;
+      }
+
+      const response = await supabase.functions.invoke('preprocess-parcel', {
+        body: {
+          user_id: user.id,
+          parcel_geometry: {
+            ...project.boundary,
+            area: project.acreage || 0,
+          },
+          lat,
+          lng,
+          property_goal: project.description || "land management",
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Preprocessing failed");
+      }
+
+      toast({
+        title: "Preprocessing started",
+        description: `Job ID: ${response.data.job_id}. The data is being processed in the background.`,
+      });
+    } catch (error) {
+      console.error("Preprocessing error:", error);
+      toast({
+        title: "Preprocessing failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPreprocessing(false);
     }
   };
 
@@ -754,8 +819,25 @@ export default function ProjectDetail() {
         </TabsContent>
 
         <TabsContent value="analysis" className="mt-6 space-y-6">
-          {/* Analysis Action Button */}
-          <div className="flex justify-end">
+          {/* Analysis Action Buttons */}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={runPreprocess}
+              disabled={isPreprocessing || !project?.boundary}
+            >
+              {isPreprocessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Preprocessing...
+                </>
+              ) : (
+                <>
+                  <Cog className="h-4 w-4 mr-2" />
+                  Run Preprocess
+                </>
+              )}
+            </Button>
             <Button
               onClick={runAnalysis}
               disabled={isAnalyzing || !project?.boundary}
