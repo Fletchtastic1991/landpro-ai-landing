@@ -87,7 +87,8 @@ serve(async (req) => {
 
   } catch (err) {
     console.error("Preprocess parcel error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
