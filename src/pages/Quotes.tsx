@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,42 +28,44 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Sparkles, Loader2, Download, Clock } from "lucide-react";
+import { Plus, Sparkles, Loader2, Download, Clock, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-const quotes = [
-  {
-    id: 1,
-    client: "Green Acres Property",
-    address: "123 Oak Street, Portland",
-    jobType: "Lawn Maintenance",
-    estimate: "$1,200",
-    status: "pending",
-  },
-  {
-    id: 2,
-    client: "Mountain View Ranch",
-    address: "456 Pine Road, Eugene",
-    jobType: "Land Clearing",
-    estimate: "$8,500",
-    status: "sent",
-  },
-  {
-    id: 3,
-    client: "Riverside Estate",
-    address: "789 River Drive, Salem",
-    jobType: "Tree Removal",
-    estimate: "$3,400",
-    status: "approved",
-  },
-];
+interface Quote {
+  id: string;
+  client_id: string | null;
+  client_name: string;
+  job_description: string;
+  property_size: string;
+  property_unit: string;
+  labor_cost: number;
+  material_cost: number;
+  equipment_cost: number;
+  total_cost: number;
+  completion_time: string;
+  status: string;
+  created_at: string;
+  project_id: string | null;
+}
 
-const statusColors = {
+interface Client {
+  id: string;
+  client_name: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+}
+
+const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20",
   sent: "bg-blue-500/10 text-blue-700 border-blue-500/20",
   approved: "bg-green-500/10 text-green-700 border-green-500/20",
+  declined: "bg-red-500/10 text-red-700 border-red-500/20",
 };
 
 interface GeneratedQuote {
@@ -72,22 +74,99 @@ interface GeneratedQuote {
   materialCost: number;
   totalEstimate: number;
   completionTime: number;
-  timestamp: Date;
-  clientName: string;
 }
 
 export default function Quotes() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuote, setGeneratedQuote] = useState<GeneratedQuote | null>(null);
-  const [quoteHistory, setQuoteHistory] = useState<GeneratedQuote[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Form state
   const [clientName, setClientName] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [jobDescription, setJobDescription] = useState("");
   const [propertySize, setPropertySize] = useState("");
   const [propertyUnit, setPropertyUnit] = useState("acres");
   const [materialNotes, setMaterialNotes] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      fetchQuotes();
+      fetchClients();
+      fetchProjects();
+    }
+  }, [user]);
+
+  const fetchQuotes = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('quotes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setQuotes(data || []);
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+      toast.error("Failed to load quotes");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchClients = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, client_name')
+        .eq('landscaper_id', user.id)
+        .order('client_name');
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+    }
+  };
+
+  const fetchProjects = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('name');
+
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
+  const handleClientSelect = (clientId: string) => {
+    setSelectedClientId(clientId);
+    if (clientId && clientId !== "none") {
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        setClientName(client.client_name);
+      }
+    }
+  };
 
   const handleGenerateQuote = async () => {
     if (!clientName || !jobDescription || !propertySize) {
@@ -99,7 +178,6 @@ export default function Quotes() {
     setGeneratedQuote(null);
 
     try {
-      // Call the Lovable Cloud backend endpoint
       const { data, error } = await supabase.functions.invoke('generate-quote', {
         body: {
           clientName,
@@ -121,8 +199,6 @@ export default function Quotes() {
         materialCost: data.materialCost,
         totalEstimate: data.totalEstimate,
         completionTime: data.completionTime,
-        timestamp: new Date(data.timestamp),
-        clientName: data.clientName
       };
 
       setGeneratedQuote(quote);
@@ -139,19 +215,50 @@ export default function Quotes() {
     }
   };
 
-  const handleSaveQuote = () => {
-    if (generatedQuote) {
-      setQuoteHistory([generatedQuote, ...quoteHistory.slice(0, 4)]);
+  const handleSaveQuote = async () => {
+    if (!generatedQuote || !user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('quotes')
+        .insert({
+          user_id: user.id,
+          client_id: selectedClientId && selectedClientId !== "none" ? selectedClientId : null,
+          project_id: selectedProjectId && selectedProjectId !== "none" ? selectedProjectId : null,
+          client_name: clientName,
+          job_description: jobDescription,
+          property_size: propertySize,
+          property_unit: propertyUnit,
+          labor_cost: generatedQuote.laborCost,
+          material_cost: generatedQuote.materialCost,
+          equipment_cost: 0,
+          total_cost: generatedQuote.totalEstimate,
+          completion_time: `${generatedQuote.completionTime} days`,
+          material_notes: materialNotes || null,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setQuotes([data, ...quotes]);
       toast.success("Quote saved!", {
-        description: "Quote has been added to your history.",
+        description: "Quote has been added to your quotes.",
       });
+      
       // Reset form
       setClientName("");
+      setSelectedClientId("");
+      setSelectedProjectId("");
       setJobDescription("");
       setPropertySize("");
       setMaterialNotes("");
       setGeneratedQuote(null);
       setOpen(false);
+    } catch (error) {
+      console.error('Error saving quote:', error);
+      toast.error("Failed to save quote");
     }
   };
 
@@ -184,6 +291,40 @@ export default function Quotes() {
             
             {!generatedQuote ? (
               <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="selectClient">Select Client (Optional)</Label>
+                    <Select value={selectedClientId} onValueChange={handleClientSelect}>
+                      <SelectTrigger id="selectClient">
+                        <SelectValue placeholder="Choose a client..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No client selected</SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.client_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="selectProject">Link to Project (Optional)</Label>
+                    <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                      <SelectTrigger id="selectProject">
+                        <SelectValue placeholder="Choose a project..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No project selected</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="client">Client Name *</Label>
                   <Input 
@@ -283,8 +424,16 @@ export default function Quotes() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Client:</span>
-                        <span className="font-medium">{generatedQuote.clientName}</span>
+                        <span className="font-medium">{clientName}</span>
                       </div>
+                      {selectedProjectId && selectedProjectId !== "none" && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Project:</span>
+                          <span className="font-medium">
+                            {projects.find(p => p.id === selectedProjectId)?.name}
+                          </span>
+                        </div>
+                      )}
                       <Separator />
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Estimated Labor:</span>
@@ -345,72 +494,59 @@ export default function Quotes() {
         </Dialog>
       </div>
 
-      {quoteHistory.length > 0 && (
-        <Card className="border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Recent AI Quotes
-            </CardTitle>
-            <CardDescription>Last 5 quotes generated with AI</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {quoteHistory.map((quote, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{quote.clientName}</p>
-                    <p className="text-sm text-muted-foreground">{quote.jobTitle}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {quote.timestamp.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-lg text-primary">
-                      ${quote.totalEstimate.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {quote.completionTime} days
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle>All Quotes</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Property Address</TableHead>
-                <TableHead>Job Type</TableHead>
-                <TableHead>Estimate</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {quotes.map((quote) => (
-                <TableRow key={quote.id}>
-                  <TableCell className="font-medium">{quote.client}</TableCell>
-                  <TableCell>{quote.address}</TableCell>
-                  <TableCell>{quote.jobType}</TableCell>
-                  <TableCell className="font-semibold">{quote.estimate}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={statusColors[quote.status]}>
-                      {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
-                    </Badge>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : quotes.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No quotes yet</p>
+              <p className="text-sm mt-1">Generate your first AI quote to get started</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Job Description</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead>Estimate</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {quotes.map((quote) => (
+                  <TableRow key={quote.id}>
+                    <TableCell className="font-medium">{quote.client_name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">
+                      {quote.job_description}
+                    </TableCell>
+                    <TableCell>
+                      {quote.property_size} {quote.property_unit}
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                      ${quote.total_cost.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={statusColors[quote.status] || ''}>
+                        {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(quote.created_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -306,6 +306,7 @@ export type Database = {
           material_cost: number
           material_notes: string | null
           notes: string | null
+          project_id: string | null
           property_size: string
           property_unit: string
           status: string
@@ -325,6 +326,7 @@ export type Database = {
           material_cost: number
           material_notes?: string | null
           notes?: string | null
+          project_id?: string | null
           property_size: string
           property_unit: string
           status?: string
@@ -344,6 +346,7 @@ export type Database = {
           material_cost?: number
           material_notes?: string | null
           notes?: string | null
+          project_id?: string | null
           property_size?: string
           property_unit?: string
           status?: string
@@ -357,6 +360,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
