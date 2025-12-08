@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,13 +36,12 @@ interface Client {
 }
 
 export default function Clients() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -147,8 +147,7 @@ export default function Clients() {
   );
 
   const handleViewDetails = (client: Client) => {
-    setSelectedClient(client);
-    setDetailsOpen(true);
+    navigate(`/dashboard/clients/${client.id}`);
   };
 
   return (
@@ -305,46 +304,6 @@ export default function Clients() {
         </CardContent>
       </Card>
 
-      {/* Client Details Dialog */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Client Details</DialogTitle>
-          </DialogHeader>
-          {selectedClient && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground text-sm">Name</Label>
-                  <p className="font-medium">{selectedClient.client_name}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground text-sm">Status</Label>
-                  <p className="font-medium capitalize">{selectedClient.status}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground text-sm">Email</Label>
-                  <p className="font-medium">{selectedClient.email}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground text-sm">Phone</Label>
-                  <p className="font-medium">{selectedClient.phone || "Not provided"}</p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground text-sm">Address</Label>
-                  <p className="font-medium">{selectedClient.address || "Not provided"}</p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground text-sm">Added On</Label>
-                  <p className="font-medium">
-                    {new Date(selectedClient.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

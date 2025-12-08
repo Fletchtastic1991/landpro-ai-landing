@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Quotes from "./pages/Quotes";
 import Jobs from "./pages/Jobs";
 import Clients from "./pages/Clients";
+import ClientDetail from "./pages/ClientDetail";
 import SettingsPage from "./pages/SettingsPage";
 import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="quotes" element={<Quotes />} />
             <Route path="jobs" element={<Jobs />} />
             <Route path="clients" element={<Clients />} />
+            <Route path="clients/:id" element={<ClientDetail />} />
             <Route path="chat" element={<Chat />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
