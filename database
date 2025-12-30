@@ -1,0 +1,2 @@
+POST /api/land
+GET /api/land/:id
