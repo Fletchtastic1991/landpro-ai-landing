@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { boundary, acreage, location } = await req.json();
+    const { boundary, acreage, location, intent } = await req.json();
     
     if (!boundary || !acreage) {
       return new Response(
@@ -35,7 +35,49 @@ serve(async (req) => {
       [0, 0]
     ).map((v: number) => v / coordinates.length);
 
-    const prompt = `You are an AI land analysis expert for landscaping professionals. Analyze this land parcel and provide detailed recommendations.
+    // Intent-specific analysis focus
+    const intentContext: Record<string, string> = {
+      build: `The landowner wants to BUILD on this land. Focus your analysis on:
+- Site preparation requirements (clearing, grading, leveling)
+- Soil stability and foundation considerations
+- Access roads and utility routing
+- Drainage and water management for construction
+- Permitting considerations based on terrain
+- Cost estimates for site prep before construction`,
+      
+      clear: `The landowner wants to CLEAR this land. Focus your analysis on:
+- Vegetation removal requirements (trees, brush, stumps)
+- Equipment needed for efficient clearing
+- Debris disposal and burn pile considerations
+- Erosion control after clearing
+- Timeline and crew requirements
+- Cost estimates for complete land clearing`,
+      
+      farm: `The landowner wants to FARM this land. Focus your analysis on:
+- Soil quality and composition estimates
+- Drainage and irrigation needs
+- Terrain suitability for crops or livestock
+- Land preparation for agricultural use
+- Seasonal considerations
+- Cost estimates for agricultural preparation`,
+      
+      evaluate: `The landowner wants to EVALUATE this land for general assessment. Focus your analysis on:
+- Overall land characteristics and potential uses
+- Property strengths and challenges
+- Comparative value factors
+- Development potential
+- Maintenance considerations
+- General cost estimates for various improvements`
+    };
+
+    const intentFocus = intent && intentContext[intent] 
+      ? intentContext[intent] 
+      : intentContext['evaluate'];
+
+    const prompt = `You are an AI land analysis expert for landowners, contractors, and farmers. Analyze this land parcel and provide actionable insights in under 2 minutes.
+
+ANALYSIS GOAL:
+${intentFocus}
 
 Land Details:
 - Area: ${acreage} acres (${(acreage * 4046.86).toFixed(0)} square meters)
@@ -49,16 +91,16 @@ Based on typical land characteristics for this region and size, provide a compre
   "vegetation": {
     "type": "string describing likely vegetation type (e.g., mixed grass, wooded, brush)",
     "density": "low/medium/high",
-    "recommendations": ["array of vegetation management recommendations"]
+    "recommendations": ["array of ${intent || 'general'}-specific vegetation recommendations"]
   },
   "terrain": {
     "type": "string describing likely terrain (e.g., flat, rolling hills, steep)",
     "slope_estimate": "percentage range estimate",
     "drainage": "good/moderate/poor",
-    "recommendations": ["array of terrain-related recommendations"]
+    "recommendations": ["array of ${intent || 'general'}-specific terrain recommendations"]
   },
   "equipment": {
-    "recommended": ["array of recommended equipment types"],
+    "recommended": ["array of recommended equipment for ${intent || 'land work'}"],
     "considerations": ["array of equipment considerations based on terrain/vegetation"]
   },
   "labor": {
@@ -70,14 +112,15 @@ Based on typical land characteristics for this region and size, provide a compre
   "cost_factors": {
     "base_rate_per_acre": number,
     "estimated_total": number,
-    "factors_affecting_cost": ["array of cost factors"]
+    "factors_affecting_cost": ["array of cost factors for ${intent || 'this work'}"]
   },
-  "summary": "2-3 sentence summary of the analysis"
+  "next_steps": ["3-5 specific actionable next steps for the landowner"],
+  "summary": "2-3 sentence summary focused on ${intent || 'general land use'} potential and immediate action items"
 }
 
-Provide realistic estimates based on the acreage and typical conditions. Be specific and actionable in recommendations.`;
+Provide realistic estimates based on the acreage and typical conditions. Be specific, actionable, and focus on what the landowner can do RIGHT NOW.`;
 
-    console.log('Calling Lovable AI for land analysis...');
+    console.log(`Calling Lovable AI for land analysis (intent: ${intent || 'evaluate'})...`);
     
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Loader2, Save, Trash2, Maximize2, Brain, Leaf, Mountain, Wrench, DollarSign, AlertTriangle, Users, Ruler, MapPin } from "lucide-react";
+import { Loader2, Save, Trash2, Maximize2, Brain, Leaf, Mountain, Wrench, DollarSign, AlertTriangle, Users, Ruler, MapPin, ArrowRight } from "lucide-react";
 
 const MAP_STYLES = {
   satellite: { id: "mapbox://styles/mapbox/satellite-streets-v12", label: "Satellite" },
@@ -52,8 +52,11 @@ interface LandAnalysis {
     estimated_total: number;
     factors_affecting_cost: string[];
   };
+  next_steps?: string[];
   summary: string;
 }
+
+import type { LandIntent } from "@/components/IntentSelector";
 
 interface MapDrawingProps {
   initialBoundary?: GeoJSON.Polygon | null;
@@ -61,6 +64,8 @@ interface MapDrawingProps {
   onSave?: (boundary: GeoJSON.Polygon, acreage: number) => Promise<void>;
   onCreateProject?: (boundary: GeoJSON.Polygon, acreage: number, analysis?: LandAnalysis) => void;
   readOnly?: boolean;
+  intent?: LandIntent | null;
+  autoAnalyze?: boolean;
 }
 
 export default function MapDrawing({
@@ -69,6 +74,8 @@ export default function MapDrawing({
   onSave,
   onCreateProject,
   readOnly = false,
+  intent = null,
+  autoAnalyze = false,
 }: MapDrawingProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -407,7 +414,7 @@ export default function MapDrawing({
     }
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = useCallback(async () => {
     if (!currentPolygon || !acreage) {
       toast.error("Please draw a boundary first");
       return;
@@ -418,7 +425,8 @@ export default function MapDrawing({
       const { data, error } = await supabase.functions.invoke('analyze-land', {
         body: { 
           boundary: currentPolygon, 
-          acreage 
+          acreage,
+          intent: intent || undefined
         }
       });
 
@@ -439,7 +447,18 @@ export default function MapDrawing({
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [currentPolygon, acreage, intent]);
+
+  // Auto-analyze when boundary is drawn and autoAnalyze is enabled
+  useEffect(() => {
+    if (autoAnalyze && currentPolygon && acreage && !analysis && !isAnalyzing) {
+      // Small delay to let the map settle
+      const timer = setTimeout(() => {
+        handleAnalyze();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoAnalyze, currentPolygon, acreage, analysis, isAnalyzing, handleAnalyze]);
 
   const handleClear = () => {
     if (draw.current) {
@@ -664,6 +683,30 @@ export default function MapDrawing({
                     </li>
                   ))}
                 </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Next Steps */}
+          {analysis.next_steps && analysis.next_steps.length > 0 && (
+            <Card className="border-primary/50 bg-primary/5">
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-2 text-primary">
+                  <ArrowRight className="h-4 w-4" />
+                  What To Do Next
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="py-2">
+                <ol className="text-xs space-y-2">
+                  {analysis.next_steps.map((step, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
               </CardContent>
             </Card>
           )}
