@@ -44,10 +44,13 @@ const Index = () => {
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center animate-fade-in">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground">
-              Know What Your Land Can Do — In Under 2 Minutes
+              Understand Your Land in Under 2 Minutes
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto">
-              LandPro AI helps landowners and operators instantly understand what they can do with any piece of land — and exactly what to do next
+            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+              Whether you're clearing brush, planning a build, or pricing a job — draw a boundary and get instant AI analysis with equipment needs, cost estimates, and clear next steps.
+            </p>
+            <p className="text-lg text-muted-foreground/80 mb-12">
+              Built for landowners, contractors, and farmers who need answers fast.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -55,15 +58,16 @@ const Index = () => {
                 onClick={() => navigate("/auth")}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-[0_0_30px_hsl(140_60%_45%/0.3)] hover:shadow-[0_0_50px_hsl(140_60%_45%/0.5)] transition-all"
               >
-                Get Started
+                Analyze Your Land Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button 
                 size="lg"
                 variant="outline"
+                onClick={() => navigate("/auth")}
                 className="border-border text-foreground text-lg px-8 py-6 hover:bg-muted"
               >
-                Request a Demo
+                See How It Works
               </Button>
             </div>
           </div>
@@ -240,17 +244,17 @@ const Index = () => {
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Ready to understand your land in under 2 minutes?
+              Ready to see what your land can do?
             </h2>
             <p className="text-xl text-muted-foreground mb-10">
-              Join landowners and operators who've stopped guessing and started knowing
+              Landowners, contractors, and farmers are already saving hours on every job. Start your first analysis free.
             </p>
             <Button 
               size="lg"
               onClick={() => navigate("/auth")}
               className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 shadow-[0_0_30px_hsl(140_60%_45%/0.3)] hover:shadow-[0_0_50px_hsl(140_60%_45%/0.5)] transition-all"
             >
-              Get Started Free
+              Start Your Free Analysis
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
