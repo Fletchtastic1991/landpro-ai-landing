@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Loader2, Save, Trash2, Maximize2, Brain, Leaf, Mountain, Wrench, DollarSign, AlertTriangle, Users, Ruler, MapPin, ArrowRight } from "lucide-react";
+import { Loader2, Save, Trash2, Maximize2, Brain, Leaf, Mountain, Wrench, DollarSign, AlertTriangle, Users, ArrowRight } from "lucide-react";
 
 const MAP_STYLES = {
   satellite: { id: "mapbox://styles/mapbox/satellite-streets-v12", label: "Satellite" },
@@ -88,10 +88,7 @@ export default function MapDrawing({
   const [analysis, setAnalysis] = useState<LandAnalysis | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [mapStyle, setMapStyle] = useState<MapStyleKey>("satellite");
-  const [measureMode, setMeasureMode] = useState<'none' | 'distance' | 'area'>('none');
-  const [measurePoints, setMeasurePoints] = useState<[number, number][]>([]);
-  const [measureResult, setMeasureResult] = useState<string | null>(null);
-  const measureSourceRef = useRef<boolean>(false);
+  
 
   const handleStyleChange = useCallback((style: MapStyleKey) => {
     if (!map.current || !style) return;
@@ -99,105 +96,6 @@ export default function MapDrawing({
     map.current.setStyle(MAP_STYLES[style].id);
   }, []);
 
-  const clearMeasurement = useCallback(() => {
-    setMeasurePoints([]);
-    setMeasureResult(null);
-    if (map.current && measureSourceRef.current) {
-      try {
-        if (map.current.getLayer('measure-lines')) map.current.removeLayer('measure-lines');
-        if (map.current.getLayer('measure-points')) map.current.removeLayer('measure-points');
-        if (map.current.getLayer('measure-fill')) map.current.removeLayer('measure-fill');
-        if (map.current.getSource('measure-geojson')) map.current.removeSource('measure-geojson');
-        measureSourceRef.current = false;
-      } catch (e) {
-        // Ignore errors if layers don't exist
-      }
-    }
-  }, []);
-
-  const toggleMeasureMode = useCallback((mode: 'distance' | 'area') => {
-    if (measureMode === mode) {
-      setMeasureMode('none');
-      clearMeasurement();
-    } else {
-      setMeasureMode(mode);
-      clearMeasurement();
-    }
-  }, [measureMode, clearMeasurement]);
-
-  const updateMeasurementDisplay = useCallback((points: [number, number][]) => {
-    if (!map.current || points.length < 2) return;
-
-    const geojson: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: {},
-          geometry: measureMode === 'area' && points.length >= 3
-            ? { type: 'Polygon', coordinates: [[...points, points[0]]] }
-            : { type: 'LineString', coordinates: points }
-        },
-        ...points.map(coord => ({
-          type: 'Feature' as const,
-          properties: {},
-          geometry: { type: 'Point' as const, coordinates: coord }
-        }))
-      ]
-    };
-
-    if (!measureSourceRef.current) {
-      map.current.addSource('measure-geojson', { type: 'geojson', data: geojson });
-      
-      if (measureMode === 'area') {
-        map.current.addLayer({
-          id: 'measure-fill',
-          type: 'fill',
-          source: 'measure-geojson',
-          filter: ['==', '$type', 'Polygon'],
-          paint: { 'fill-color': '#3b82f6', 'fill-opacity': 0.2 }
-        });
-      }
-      
-      map.current.addLayer({
-        id: 'measure-lines',
-        type: 'line',
-        source: 'measure-geojson',
-        filter: ['in', '$type', 'LineString', 'Polygon'],
-        paint: { 'line-color': '#3b82f6', 'line-width': 2, 'line-dasharray': [2, 2] }
-      });
-      
-      map.current.addLayer({
-        id: 'measure-points',
-        type: 'circle',
-        source: 'measure-geojson',
-        filter: ['==', '$type', 'Point'],
-        paint: { 'circle-radius': 5, 'circle-color': '#3b82f6', 'circle-stroke-color': '#fff', 'circle-stroke-width': 2 }
-      });
-      
-      measureSourceRef.current = true;
-    } else {
-      (map.current.getSource('measure-geojson') as mapboxgl.GeoJSONSource)?.setData(geojson);
-    }
-
-    // Calculate measurement
-    if (measureMode === 'distance') {
-      const line = turf.lineString(points);
-      const length = turf.length(line, { units: 'feet' });
-      setMeasureResult(length >= 5280 
-        ? `${(length / 5280).toFixed(2)} miles`
-        : `${Math.round(length)} ft`
-      );
-    } else if (measureMode === 'area' && points.length >= 3) {
-      const polygon = turf.polygon([[...points, points[0]]]);
-      const areaM2 = turf.area(polygon);
-      const acres = areaM2 * 0.000247105;
-      setMeasureResult(acres >= 1 
-        ? `${acres.toFixed(2)} acres`
-        : `${Math.round(areaM2 * 10.7639)} sq ft`
-      );
-    }
-  }, [measureMode]);
 
   const calculateArea = useCallback((polygon: GeoJSON.Polygon) => {
     const area = turf.area(polygon);
@@ -273,7 +171,7 @@ export default function MapDrawing({
             filter: ["all", ["==", "$type", "Polygon"]],
             paint: {
               "fill-color": "#22c55e",
-              "fill-opacity": 0.3,
+              "fill-opacity": 0.35,
             },
           },
           {
@@ -282,7 +180,7 @@ export default function MapDrawing({
             filter: ["all", ["==", "$type", "Polygon"]],
             paint: {
               "line-color": "#16a34a",
-              "line-width": 3,
+              "line-width": 4,
             },
           },
           {
@@ -290,7 +188,7 @@ export default function MapDrawing({
             type: "circle",
             filter: ["all", ["==", "$type", "Point"], ["==", "meta", "midpoint"]],
             paint: {
-              "circle-radius": 5,
+              "circle-radius": 6,
               "circle-color": "#16a34a",
             },
           },
@@ -299,7 +197,7 @@ export default function MapDrawing({
             type: "circle",
             filter: ["all", ["==", "$type", "Point"], ["==", "meta", "vertex"]],
             paint: {
-              "circle-radius": 8,
+              "circle-radius": 10,
               "circle-color": "#fff",
             },
           },
@@ -308,7 +206,7 @@ export default function MapDrawing({
             type: "circle",
             filter: ["all", ["==", "$type", "Point"], ["==", "meta", "vertex"]],
             paint: {
-              "circle-radius": 5,
+              "circle-radius": 6,
               "circle-color": "#16a34a",
             },
           },
@@ -328,19 +226,6 @@ export default function MapDrawing({
       });
     }
 
-    // Measurement click handler
-    const handleMeasureClick = (e: mapboxgl.MapMouseEvent) => {
-      if (measureMode === 'none') return;
-      
-      const coords: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-      setMeasurePoints(prev => {
-        const newPoints = [...prev, coords];
-        updateMeasurementDisplay(newPoints);
-        return newPoints;
-      });
-    };
-
-    map.current.on('click', handleMeasureClick);
 
     map.current.on("load", () => {
       if (initialBoundary && map.current) {
@@ -400,7 +285,7 @@ export default function MapDrawing({
       map.current?.remove();
       map.current = null;
     };
-  }, [initialBoundary, initialAcreage, readOnly, updateArea, measureMode, updateMeasurementDisplay]);
+  }, [initialBoundary, initialAcreage, readOnly, updateArea]);
 
   const handleSave = async () => {
     if (!currentPolygon || !onSave || !acreage) return;
@@ -727,70 +612,6 @@ export default function MapDrawing({
           </div>
         )}
       </div>
-
-      {/* Measurement Tools - positioned top-right below navigation controls */}
-      {!readOnly && (
-        <div 
-          className="absolute bg-background/95 backdrop-blur-sm rounded-lg shadow-lg border p-2 space-y-1 z-10" 
-          style={{ 
-            top: '10rem', 
-            right: showAnalysis ? 'calc(40% + 1rem)' : '1rem' 
-          }}
-        >
-          <div className="text-xs font-medium text-muted-foreground px-2 pb-1 border-b mb-1">
-            Measure
-          </div>
-          <Button
-            variant={measureMode === 'distance' ? 'default' : 'ghost'}
-            size="sm"
-            className="w-full justify-start"
-            onClick={() => toggleMeasureMode('distance')}
-          >
-            <Ruler className="h-4 w-4 mr-2" />
-            Distance
-          </Button>
-          <Button
-            variant={measureMode === 'area' ? 'default' : 'ghost'}
-            size="sm"
-            className="w-full justify-start"
-            onClick={() => toggleMeasureMode('area')}
-          >
-            <MapPin className="h-4 w-4 mr-2" />
-            Area
-          </Button>
-          {measureMode !== 'none' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-destructive hover:text-destructive"
-              onClick={clearMeasurement}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Measurement Result */}
-      {measureResult && (
-        <div className="absolute top-4 left-4 bg-blue-500/90 text-white rounded-lg shadow-lg px-4 py-2 border">
-          <div className="text-xs font-medium opacity-80">
-            {measureMode === 'distance' ? 'Distance' : 'Area'}
-          </div>
-          <div className="text-lg font-bold">{measureResult}</div>
-        </div>
-      )}
-
-      {/* Measure Mode Instructions */}
-      {measureMode !== 'none' && !measureResult && (
-        <div className="absolute top-4 left-4 bg-blue-500/90 text-white rounded-lg shadow-lg px-4 py-2">
-          <div className="text-sm">
-            Click on map to {measureMode === 'distance' ? 'measure distance' : 'measure area'}
-            {measureMode === 'area' && measurePoints.length < 3 && ' (min 3 points)'}
-          </div>
-        </div>
-      )}
 
       {/* Action Buttons */}
       {!readOnly && (
