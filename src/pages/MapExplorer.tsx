@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Map, Loader2, ArrowRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import MapDrawing from "@/components/MapDrawing";
 import IntentSelector, { LandIntent, INTENT_OPTIONS } from "@/components/IntentSelector";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,71 +111,72 @@ export default function MapExplorer() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold">Analyze Your Land</h1>
-        <p className="text-muted-foreground">
-          Select what you want to do, then search for your property to get instant AI analysis
+    <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
+      {/* Hero Header */}
+      <div className="text-center space-y-3 pb-2">
+        <h1 className="text-4xl font-bold tracking-tight">Analyze Your Land</h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Select your goal, find your property, and get AI-powered insights in under 2 minutes.
         </p>
       </div>
 
       {/* Step 1: Intent Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-              1
-            </span>
-            What do you want to do with your land?
-          </CardTitle>
-          <CardDescription>
-            Select your goal so we can tailor the analysis to your needs
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <IntentSelector 
-            selectedIntent={selectedIntent} 
-            onSelectIntent={setSelectedIntent} 
-          />
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-sm">
+            1
+          </span>
+          <div>
+            <h2 className="text-xl font-semibold">What's your goal?</h2>
+            <p className="text-sm text-muted-foreground">Choose what you want to do with your land</p>
+          </div>
+        </div>
+        <Card className="border-2 border-dashed border-border/50 bg-card/50">
+          <CardContent className="pt-6">
+            <IntentSelector 
+              selectedIntent={selectedIntent} 
+              onSelectIntent={setSelectedIntent} 
+            />
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Step 2: Map and Analysis */}
-      <Card className={!selectedIntent ? "opacity-60 pointer-events-none" : ""}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-              2
-            </span>
-            <Map className="h-5 w-5" />
-            Find Your Property
-            {selectedIntent && (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                — {getIntentDescription()}
-              </span>
-            )}
-          </CardTitle>
-          <CardDescription>
-            {selectedIntent 
-              ? "Search for an address or drop a pin, then draw your property boundary. Analysis runs automatically."
-              : "First, select what you want to do above"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[600px] rounded-lg overflow-hidden">
-            <MapDrawing 
-              readOnly={false} 
-              onCreateProject={handleCreateProject}
-              intent={selectedIntent}
-              autoAnalyze={!!selectedIntent}
-            />
+      <section className={`space-y-4 transition-all duration-500 ${!selectedIntent ? "opacity-40 pointer-events-none" : ""}`}>
+        <div className="flex items-center gap-3">
+          <span className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold shadow-sm transition-colors ${
+            selectedIntent 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-muted text-muted-foreground"
+          }`}>
+            2
+          </span>
+          <div>
+            <h2 className="text-xl font-semibold">Find your property</h2>
+            <p className="text-sm text-muted-foreground">
+              {selectedIntent 
+                ? `Search for an address, then draw your boundary. Analysis starts automatically.`
+                : "First, select your goal above"}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <Card className="border-2 overflow-hidden">
+          <CardContent className="p-0">
+            <div className="h-[650px]">
+              <MapDrawing 
+                readOnly={false} 
+                onCreateProject={handleCreateProject}
+                intent={selectedIntent}
+                autoAnalyze={!!selectedIntent}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Floating Intent Indicator */}
       {selectedIntent && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-md rounded-full shadow-lg border px-4 py-2 flex items-center gap-3">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-md rounded-full shadow-lg border px-5 py-2.5 flex items-center gap-3 transition-all">
           <span className="text-sm text-muted-foreground">Goal:</span>
           <IntentSelector 
             selectedIntent={selectedIntent} 
@@ -189,9 +190,9 @@ export default function MapExplorer() {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
+            <DialogTitle>Save as Project</DialogTitle>
             <DialogDescription>
-              Save your selected land boundary as a new project. 
+              Save your analysis for future reference. 
               {projectData?.acreage && ` Area: ${projectData.acreage} acres`}
             </DialogDescription>
           </DialogHeader>
@@ -206,20 +207,20 @@ export default function MapExplorer() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
+              <Label htmlFor="description">Notes (optional)</Label>
               <Textarea
                 id="description"
                 value={projectDescription}
                 onChange={(e) => setProjectDescription(e.target.value)}
-                placeholder="Enter project description"
+                placeholder="Add any notes about this property"
                 rows={3}
               />
             </div>
             {projectData?.analysis && (
-              <div className="p-3 bg-muted rounded-lg text-sm">
-                <span className="font-medium">AI Analysis included:</span>
+              <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-sm">
+                <span className="font-medium text-primary">Analysis included</span>
                 <span className="text-muted-foreground ml-2">
-                  Vegetation, terrain, equipment recommendations, and cost estimates will be saved with this project.
+                  — vegetation, terrain, equipment, and cost estimates
                 </span>
               </div>
             )}
@@ -230,7 +231,7 @@ export default function MapExplorer() {
             </Button>
             <Button onClick={handleSubmitProject} disabled={isCreating}>
               {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Create Project
+              Save Project
             </Button>
           </DialogFooter>
         </DialogContent>

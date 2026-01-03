@@ -26,7 +26,7 @@ const Index = () => {
               Contact
             </a>
             <Button 
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/dashboard/map")}
               variant="outline"
               className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             >
@@ -55,7 +55,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg"
-                onClick={() => navigate("/auth")}
+                onClick={() => navigate("/dashboard/map")}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-[0_0_30px_hsl(140_60%_45%/0.3)] hover:shadow-[0_0_50px_hsl(140_60%_45%/0.5)] transition-all"
               >
                 Analyze Your Land Now
@@ -64,7 +64,10 @@ const Index = () => {
               <Button 
                 size="lg"
                 variant="outline"
-                onClick={() => navigate("/auth")}
+                onClick={() => {
+                  const el = document.getElementById('about');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="border-border text-foreground text-lg px-8 py-6 hover:bg-muted"
               >
                 See How It Works
@@ -251,7 +254,7 @@ const Index = () => {
             </p>
             <Button 
               size="lg"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/dashboard/map")}
               className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-10 py-6 shadow-[0_0_30px_hsl(140_60%_45%/0.3)] hover:shadow-[0_0_50px_hsl(140_60%_45%/0.5)] transition-all"
             >
               Start Your Free Analysis
